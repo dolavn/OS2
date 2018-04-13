@@ -53,6 +53,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   uint pendingSigs;
   uint sigMask;
+  uint oldMask;
   void* sigHandlers[NUM_OF_SIGS];
   struct trapframe* usrTFbackup;
 };
