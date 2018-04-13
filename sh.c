@@ -159,12 +159,22 @@ main(void)
     }
   }
   int pid=fork1();
+  signal(5,&printNum);
   if(pid == 0){
-    while(1==1){
+    while(1){
       printf(2,"Running lalala nobody gonna stop me\n");
     }
   }else{
-    kill(pid,9);
+    int c=0;
+    int type=17;
+    while(1){
+      if(c++==100){
+        printf(2,"%s\n",type==17?"Stopping":"Continuing");
+        kill(pid,type);
+        c=0;
+        type = type==17?19:17;
+      }
+    }
   }
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){

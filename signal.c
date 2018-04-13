@@ -28,16 +28,16 @@ int handleSignal(){
         if(p->sigHandlers[i]==SIG_DFL){
           switch(i){
               case SIGKILL:
-                  handleKill(p->pid);
+                  handleKill();
                   break;
               case SIGSTOP:
-                  handleStop(p->pid);
+                  handleStop();
                   break;
               case SIGCONT:
-                  handleCont(p->pid);
+                  handleCont();
                   break;
               default:
-                  handleKill(p->pid);
+                  handleKill();
                   break;
           }
         }else{
@@ -49,35 +49,3 @@ int handleSignal(){
   return ret;
 }
 
-int
-handleKill(int pid) {
-  struct proc *p;
-  p = myproc();
-  p->killed = 1;
-  return 0;
-}
-
-
-int handleStop(int pid){
-  struct proc* currProc = myproc();
-  if(currProc->pid!=pid){
-    panic("sig stop");
-  }
-  if(currProc->state==RUNNING || currProc->state==RUNNABLE){
-    currProc->state=FROZEN;
-    return 0;
-  }
-  return -1;
-}
-
-int handleCont(int pid){
-  struct proc* currProc = myproc();
-  if(currProc->pid!=pid){
-    panic("sig stop");
-  }
-  if(currProc->state==FROZEN){
-    currProc->state=RUNNABLE;
-    return 0;
-  }
-  return -1;
-}

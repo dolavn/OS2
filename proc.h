@@ -34,7 +34,7 @@ struct context {
   uint eip;
 };
 
-enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE, FROZEN };
+enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
 struct proc {
@@ -53,6 +53,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   uint pendingSigs;
   uint sigMask;
+  char frozen;                 // Frozen flag
   void* sigHandlers[NUM_OF_SIGS];
   struct trapframe* usrTFbackup;
 };
@@ -60,9 +61,9 @@ struct proc {
 uint setSigMask(uint);
 sighandler_t setSignalHandler(int,sighandler_t);
 
-int handleKill(int);
-int handleStop(int);
-int handleCont(int);
+int handleKill();
+int handleStop();
+int handleCont();
 
 int handleSignal();
 void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]);

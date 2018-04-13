@@ -99,6 +99,7 @@ allocproc(void)
 
 found:
   p->state = EMBRYO;
+  p->frozen = 0;
   release(&ptable.lock);
   p->pid = allocpid();
 
@@ -351,7 +352,7 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      if(p->state != RUNNABLE || p->frozen)
         continue;
 
       // Switch to chosen process.  It is the process's job
@@ -559,6 +560,42 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int
+handleKill() {
+  struct proc *p;
+  p = myproc();
+  acquire(&ptable.lock);
+  p->killed = 1;
+  release(&ptable.lock);
+  return 0;
+}
+
+
+int handleStop(){
+  cprintf("handle stop\n");
+  struct proc* currProc = myproc();
+  if(currProc->state==RUNNING || currProc->state==RUNNABLE){
+    acquire(&ptable.lock);
+    currProc->frozen=1;
+    release(&ptable.lock);
+    return 0;
+  }
+  return -1;
+}
+
+int handleCont(){
+  cprintf("handle cont\n");
+  struct proc* currProc = myproc();
+  if(currProc->frozen){
+    acquire(&ptable.lock);
+    currProc->frozen=0;
+    release(&ptable.lock);
+    return 0;
+  }
+  return -1;
+}
+
 
 sighandler_t
 setSignalHandler(int signum,sighandler_t handler){
