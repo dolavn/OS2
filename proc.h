@@ -60,6 +60,10 @@ struct proc {
 uint setSigMask(uint);
 sighandler_t setSignalHandler(int,sighandler_t);
 
+int handleKill(int);
+int handleStop(int);
+int handleCont(int);
+
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss
