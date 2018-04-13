@@ -60,6 +60,7 @@ struct proc {
 };
 
 uint setSigMask(uint);
+void setPendingSignals(uint);
 sighandler_t setSignalHandler(int,sighandler_t);
 
 int handleKill();
@@ -67,6 +68,7 @@ int handleStop();
 int handleCont();
 
 int handleSignal();
+void turnOffBit(int,uint*);
 void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]);
 
 // Process memory is laid out contiguously, low addresses first:

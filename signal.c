@@ -16,6 +16,13 @@ void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]){
   }
 }
 
+void turnOffBit(int bit,uint* pendingSigs){
+  int operand = 1;
+  operand<<=bit;
+  operand = ~operand;
+  *pendingSigs&=operand;
+}
+
 int handleSignal(){
   struct proc *p;
   p = myproc(); 
@@ -43,6 +50,9 @@ int handleSignal(){
         }else{
           ret=0;
         }
+        uint pendingSigs = p->pendingSigs;
+        turnOffBit(i,&pendingSigs);
+        setPendingSignals(pendingSigs);
       }
     }
   }

@@ -168,7 +168,7 @@ main(void)
     int c=0;
     int type=17;
     while(1){
-      if(c++==100){
+      if(c++==10000){
         printf(2,"%s\n",type==17?"Stopping":"Continuing");
         kill(pid,type);
         c=0;

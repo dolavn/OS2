@@ -352,19 +352,19 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE || p->frozen)
+      if(p->state != RUNNABLE)
         continue;
-
+      if(p->frozen){
+        continue;
+      }
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-
       swtch(&(c->scheduler), p->context);
       switchkvm();
-
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
@@ -561,6 +561,14 @@ procdump(void)
   }
 }
 
+void setPendingSignals(uint pendingSigs){
+  struct proc *p;
+  p = myproc();
+  acquire(&ptable.lock);
+  p->pendingSigs=pendingSigs;
+  release(&ptable.lock);
+}
+
 int
 handleKill() {
   struct proc *p;
@@ -573,24 +581,26 @@ handleKill() {
 
 
 int handleStop(){
-  cprintf("handle stop\n");
   struct proc* currProc = myproc();
-  if(currProc->state==RUNNING || currProc->state==RUNNABLE){
+  if((currProc->state==RUNNING || currProc->state==RUNNABLE) && !currProc->frozen){
+    cprintf("handle stop\n");
     acquire(&ptable.lock);
     currProc->frozen=1;
     release(&ptable.lock);
+    cprintf("finished handling stop\n");
     return 0;
   }
   return -1;
 }
 
 int handleCont(){
-  cprintf("handle cont\n");
   struct proc* currProc = myproc();
   if(currProc->frozen){
+    cprintf("handle cont\n");
     acquire(&ptable.lock);
     currProc->frozen=0;
     release(&ptable.lock);
+    cprintf("finished handling cont\n");
     return 0;
   }
   return -1;
