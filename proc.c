@@ -501,7 +501,7 @@ kill(int pid, int signum)
   struct proc *p;
   uint sig = 1;
   sig <<= signum;
-  
+
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
@@ -617,7 +617,11 @@ setSigMask(uint mask){
   return ans;
 }
 
-void 
+void
 sigret(void) {
-  /* code */
+  acquire(&ptable.lock);
+  struct proc *p = myproc();
+  p->tf = p->usrTFbackup;
+  p->sigMask = p->oldMask;
+  release(&ptable.lock);
 }

@@ -54,6 +54,7 @@ struct proc {
   uint pendingSigs;
   uint sigMask;
   char frozen;                 // Frozen flag
+  uint oldMask;
   void* sigHandlers[NUM_OF_SIGS];
   struct trapframe* usrTFbackup;
 };
