@@ -6,7 +6,7 @@ int
 main(int argc, char **argv)
 {
   int i;
-
+  printf(2,"dolav\n");
   if(argc < 3 || argc%2==0){
     printf(2, "usage: kill pid signum...\n");
     exit();
