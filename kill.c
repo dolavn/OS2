@@ -6,7 +6,7 @@ int
 main(int argc, char **argv)
 {
   int i;
-
+  printf(2,"dolav\n");
   if(argc < 3 || argc%2==0){
     printf(2, "usage: kill pid signum...\n");
     exit();
@@ -15,6 +15,6 @@ main(int argc, char **argv)
     printf(2,"sending %s signal:%s\n",argv[i],argv[i+1]);
     kill(atoi(argv[i]),atoi(argv[i+1]));
   }
-  printf("eyalkt\n");
+  printf("eyal\n");
   exit();
 }
