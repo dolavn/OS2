@@ -34,7 +34,7 @@ struct context {
   uint eip;
 };
 
-enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE, FROZEN };
 
 // Per-process state
 struct proc {
@@ -57,13 +57,12 @@ struct proc {
   struct trapframe* usrTFbackup;
 };
 
-#ifndef SIG_HANDLER_T
-#define SIG_HANDLER_T
-typedef void (*sighandler_t)(int);
-#endif
-
 uint setSigMask(uint);
 sighandler_t setSignalHandler(int,sighandler_t);
+
+int handleKill(int);
+int handleStop(int);
+int handleCont(int);
 
 // Process memory is laid out contiguously, low addresses first:
 //   text
