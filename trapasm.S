@@ -24,6 +24,9 @@ alltraps:
 .globl trapret
 trapret:
   popal
+  push %eax #saves value of eax
+  call handleSignal
+  pop %eax #retrieves value of eax
   popl %gs
   popl %fs
   popl %es

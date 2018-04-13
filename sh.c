@@ -158,13 +158,14 @@ main(void)
       break;
     }
   }
-  sighandler_t handler;
-  handler = signal(2,&printNum);
-  printf(2,"handler:%p\n",handler);
-  handler = signal(2,&printNum);
-  printf(2,"handler:%p\n",handler);
-  handler(5);
-  sigret();
+  int pid=fork1();
+  if(pid == 0){
+    while(1==1){
+      printf(2,"Running lalala nobody gonna stop me\n");
+    }
+  }else{
+    kill(pid,9);
+  }
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){

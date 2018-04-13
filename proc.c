@@ -499,7 +499,7 @@ kill(int pid, int signum)
 {
   struct proc *p;
   uint sig = 1;
-  sig <<= signum-1;
+  sig <<= signum;
   
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){

@@ -5,12 +5,56 @@
 #include "defs.h"
 #include "proc.h"
 
+void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]){
+  int currBit=0;
+  while(pendingSigs>0){
+    bits[currBit++]=pendingSigs%2==0?0:1;
+    pendingSigs=pendingSigs/2;
+  }
+  while(currBit<NUM_OF_SIGS){
+    bits[currBit++]=0;
+  }
+}
+
+int handleSignal(){
+  struct proc *p;
+  p = myproc(); 
+  int ret=1;
+  if(p!=0){
+    char bits[NUM_OF_SIGS];
+    getAllSignals(p->pendingSigs,bits);
+    for(int i=0;i<NUM_OF_SIGS;++i){
+      if(bits[i]){
+        if(p->sigHandlers[i]==SIG_DFL){
+          switch(i){
+              case SIGKILL:
+                  handleKill(p->pid);
+                  break;
+              case SIGSTOP:
+                  handleStop(p->pid);
+                  break;
+              case SIGCONT:
+                  handleCont(p->pid);
+                  break;
+              default:
+                  handleKill(p->pid);
+                  break;
+          }
+        }else{
+          ret=0;
+        }
+      }
+    }
+  }
+  return ret;
+}
+
 int
-handleKill(int) {
+handleKill(int pid) {
   struct proc *p;
   p = myproc();
   p->killed = 1;
-
+  return 0;
 }
 
 

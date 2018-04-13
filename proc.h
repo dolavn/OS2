@@ -53,7 +53,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   uint pendingSigs;
   uint sigMask;
-  void* sigHandlers[32];
+  void* sigHandlers[NUM_OF_SIGS];
   struct trapframe* usrTFbackup;
 };
 
@@ -63,6 +63,9 @@ sighandler_t setSignalHandler(int,sighandler_t);
 int handleKill(int);
 int handleStop(int);
 int handleCont(int);
+
+int handleSignal();
+void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]);
 
 // Process memory is laid out contiguously, low addresses first:
 //   text
