@@ -1,5 +1,10 @@
+#include "param.h"
 #include "signal.h"
+#include "types.h"
+#include "mmu.h"
+#include "defs.h"
 #include "proc.h"
+
 
 int handleStop(int pid){
   struct proc* currProc = myproc();

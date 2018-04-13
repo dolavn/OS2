@@ -57,11 +57,6 @@ struct proc {
   struct trapframe* usrTFbackup;
 };
 
-#ifndef SIG_HANDLER_T
-#define SIG_HANDLER_T
-typedef void (*sighandler_t)(int);
-#endif
-
 uint setSigMask(uint);
 sighandler_t setSignalHandler(int,sighandler_t);
 
