@@ -11,4 +11,9 @@
 
 typedef void (*sighandler_t)(int);
 
+int handleKill(int);
+int handleStop(int);
+int handleCont(int);
+
+
 #endif
