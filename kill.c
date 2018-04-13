@@ -15,5 +15,6 @@ main(int argc, char **argv)
     printf(2,"sending %s signal:%s\n",argv[i],argv[i+1]);
     kill(atoi(argv[i]),atoi(argv[i+1]));
   }
+  printf("eyalkt\n");
   exit();
 }
