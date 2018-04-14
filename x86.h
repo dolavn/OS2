@@ -1,5 +1,20 @@
 // Routines to let C code use special x86 instructions.
 
+static inline int cas(volatile void *addr, int expected, int newval) {
+  int ans;
+  asm("push %%eax;"
+      "push %%ebx;"
+      "movl %0, %%eax;"//"": "a" (expected) : ", %eax\n\t"
+      "movl (%1), %%ebx;"//"": "d" (*addr) : "), %ebx\n\t"
+      "lock cmpxchg %%ebx, %0;"//"($"+addr+")\n\t"
+      "pushfl;"
+      "popl %%eax;"
+      : "=a" (ans)
+      : "r" (expected) , "r" (addr)
+      );
+  return ans;
+}
+
 static inline uchar
 inb(ushort port)
 {

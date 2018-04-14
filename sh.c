@@ -145,10 +145,35 @@ int print=0;
 void changeNum(int a){
   print=1;
 }
-
+/*
+static inline int cas(volatile void *addr, int expected, int newval) {
+  int ans;
+  asm("push %%eax;"
+      "push %%ebx;"
+      "movl %1, %%eax;"//"": "a" (expected) : ", %eax\n\t"
+      "movl (%2), %%ebx;"//"": "d" (*addr) : "), %ebx\n\t"
+      "lock cmpxchg %%ebx, %3;"//"($"+addr+")\n\t"
+      "pushfl;"
+      "popl %%eax;"
+      : "=a" (ans)
+      : "r" (expected) , "r" (addr) , "r" (newval)
+      : "memory");
+  return ans;
+}
+*/
+static inline int cas(volatile void *addr, int expected, int newval) {
+  int c = expected+newval;
+  return c;
+}
 int
 main(void)
 {
+
+  int counter = 0;
+  int b = 0;
+  printf(2, "cas ans: %d , counter: %d\n", (int) cas(&counter, b, b+1), counter);
+  // printf(2,"%d\n", counter);
+
   static char buf[100];
   int fd;
 
@@ -161,7 +186,7 @@ main(void)
   }
   signal(5,&changeNum);
   int pid=fork1();
-  
+
   if(pid == 0){
     while(1){
       if(print){printf(2,"printing\n");}
