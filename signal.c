@@ -52,6 +52,8 @@ int handleSignal(){
               case SIGSTOP:
                   handleStop();
                   break;
+              case SIGCONT:
+                  break;
               default:
                   handleKill();
                   break;
@@ -59,7 +61,6 @@ int handleSignal(){
         }else{ //user space handler
           copyTF(p->usrTFbackup,p->tf);
           p->tf->eip = (uint)(p->sigHandlers[i]);
-          cprintf("old eip:%p\nnew eip:%p\n",p->usrTFbackup->eip,p->tf->eip);
           int param = i;
           uint funcSize = sigRetCallEnd-sigRetCall;
           p->tf->esp = p->tf->esp-funcSize;

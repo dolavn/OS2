@@ -167,13 +167,14 @@ main(void)
   
   if(pid == 0){
     while(1){
-      if(1){printf(2,"printing\n");}
+      if(0){printf(2,"printing\n");}
     }
   }
   int type=17;
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
     kill(pid,type);
+    printf(2,"kill(%d,%d)\n",pid,type);
     type=type==17?19:17;
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
