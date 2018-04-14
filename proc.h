@@ -65,7 +65,6 @@ sighandler_t setSignalHandler(int,sighandler_t);
 
 int handleKill();
 int handleStop();
-int handleCont();
 
 int handleSignal();
 void turnOffBit(int,uint*);

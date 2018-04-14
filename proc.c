@@ -583,10 +583,25 @@ handleKill() {
 int handleStop(){
   struct proc* currProc = myproc();
   if((currProc->state==RUNNING || currProc->state==RUNNABLE) && !currProc->frozen){
-    cprintf("handle stop\n");
     acquire(&ptable.lock);
     currProc->frozen=1;
     release(&ptable.lock);
+    int contFlag = 1<<SIGCONT;
+    int flag=1;
+    while(flag){
+      if((currProc->pendingSigs&contFlag)==0){
+        cprintf("yielding %d\n",flag);
+        yield();
+      }else{
+        cprintf("releasing\n");
+        acquire(&ptable.lock);
+        currProc->frozen=0;
+        turnOffBit(SIGSTOP,&currProc->pendingSigs);
+        turnOffBit(SIGCONT,&currProc->pendingSigs);
+        release(&ptable.lock);
+        flag=0;
+      }
+    }
     cprintf("finished handling stop\n");
     return 0;
   }
@@ -630,7 +645,8 @@ setSigMask(uint mask){
 void sigret(void) {
   acquire(&ptable.lock);
   struct proc *p = myproc();
-  p->tf = p->usrTFbackup;
+  copyTF(p->tf,p->usrTFbackup);
+  cprintf("eip is now:%p\n",p->tf->eip);
   p->sigMask = p->oldMask;
   release(&ptable.lock);
 }

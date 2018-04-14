@@ -1,5 +1,5 @@
 #include "mmu.h"
-
+#include "traps.h"
   # vectors.S sends all traps here.
 .globl alltraps
 alltraps:
@@ -23,13 +23,21 @@ alltraps:
   # Return falls through to trapret...
 .globl trapret
 trapret:
-  popal
   push %eax #saves value of eax
   call handleSignal
   pop %eax #retrieves value of eax
+  popal
   popl %gs
   popl %fs
   popl %es
   popl %ds
   addl $0x8, %esp  # trapno and errcode
   iret
+  
+.globl sigRetCall
+.globl sigRetCallEnd
+
+sigRetCall:
+  movl $24,%eax
+  int $64
+sigRetCallEnd:
