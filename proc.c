@@ -126,7 +126,7 @@ found:
   p->context->eip = (uint)forkret;
 
   int i;
-  for (i=0; i<NUM_OF_SIGS; i++) p->sigHandlers[i] = SIG_DFL;
+  for (i=0; i<NUM_OF_SIGS; i++) p->sigHandlers[i] = (void*)SIG_DFL;
 
   return p;
 }
@@ -627,8 +627,7 @@ setSigMask(uint mask){
   return ans;
 }
 
-void
-sigret(void) {
+void sigret(void) {
   acquire(&ptable.lock);
   struct proc *p = myproc();
   p->tf = p->usrTFbackup;

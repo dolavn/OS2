@@ -70,7 +70,7 @@ int handleCont();
 int handleSignal();
 void turnOffBit(int,uint*);
 void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]);
-
+void copyTF(struct trapframe*,struct trapframe*);
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss

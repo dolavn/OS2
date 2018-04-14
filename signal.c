@@ -4,6 +4,11 @@
 #include "mmu.h"
 #include "defs.h"
 #include "proc.h"
+#include "x86.h"
+
+void copyTF(struct trapframe* dst,struct trapframe* src){
+  memmove(dst,src,sizeof(struct trapframe));
+}
 
 void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]){
   int currBit=0;
@@ -28,11 +33,12 @@ int handleSignal(){
   p = myproc(); 
   int ret=1;
   if(p!=0){
+    p->oldMask = setSigMask(-1);
     char bits[NUM_OF_SIGS];
     getAllSignals(p->pendingSigs,bits);
     for(int i=0;i<NUM_OF_SIGS;++i){
       if(bits[i]){
-        if(p->sigHandlers[i]==SIG_DFL){
+        if(p->sigHandlers[i]==(void*)SIG_DFL){ //kernel space handler
           switch(i){
               case SIGKILL:
                   handleKill();
@@ -47,9 +53,17 @@ int handleSignal(){
                   handleKill();
                   break;
           }
-        }else{
-          ret=0;
+        }else{ //user space handler
+          copyTF(p->usrTFbackup,p->tf);
+          p->tf->eip = (uint)(p->sigHandlers[i]);
+          p->tf->esp = p->tf->esp-4;
+          void* a = &sigret;
+          int param = 1;
+          memmove((void*)(p->tf->esp),&param,4);
+          p->tf->esp = p->tf->esp-4;
+          memmove((void*)(p->tf->esp),&a,4);
         }
+        setSigMask(p->oldMask);
         uint pendingSigs = p->pendingSigs;
         turnOffBit(i,&pendingSigs);
         setPendingSignals(pendingSigs);

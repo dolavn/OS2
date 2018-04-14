@@ -140,9 +140,10 @@ getcmd(char *buf, int nbuf)
     return -1;
   return 0;
 }
+int print=0;
 
-void printNum(int a){
-  printf(2,"num:%d\n",a);
+void changeNum(int a){
+  print=1;
 }
 
 int
@@ -158,24 +159,15 @@ main(void)
       break;
     }
   }
+  signal(5,&changeNum);
   int pid=fork1();
-  signal(5,&printNum);
+  
   if(pid == 0){
     while(1){
-      printf(2,"Running lalala nobody gonna stop me\n");
-    }
-  }else{
-    int c=0;
-    int type=17;
-    while(1){
-      if(c++==10000){
-        printf(2,"%s\n",type==17?"Stopping":"Continuing");
-        kill(pid,type);
-        c=0;
-        type = type==17?19:17;
-      }
+      if(print){printf(2,"printing\n");}
     }
   }
+  kill(pid,5);
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){

@@ -2,7 +2,7 @@
 #define SIGNAL_H_
 
 #define NUM_OF_SIGS 32
-#define SIG_DFL 0
+#define SIG_DFL -1
 #define SIG_IGN 1
 
 #define SIGKILL 9

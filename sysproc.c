@@ -9,7 +9,7 @@
 
 int
 sys_sigret(void) {
-  cprintf("Sigret\n");
+  sigret();
   return 0;
 }
 

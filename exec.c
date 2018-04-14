@@ -104,7 +104,7 @@ exec(char *path, char **argv)
 
   for (i=0; i<NUM_OF_SIGS; i++)
     if ((int)curproc->sigHandlers[i] != SIG_DFL && (int)curproc->sigHandlers[i] != SIG_IGN)
-      curproc->sigHandlers[i] = SIG_DFL;
+      curproc->sigHandlers[i] = (void*)SIG_DFL;
       
   return 0;
 
