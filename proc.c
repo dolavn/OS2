@@ -354,9 +354,6 @@ scheduler(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
-      if(p->frozen){
-        continue;
-      }
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
@@ -501,12 +498,12 @@ kill(int pid, int signum)
   struct proc *p;
   uint sig = 1;
   sig <<= signum;
-
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
       if(!(p->sigMask & sig)) {
         p->pendingSigs |= sig;
+        cprintf("pendingSigs:%d\n",p->pendingSigs);
         release(&ptable.lock);
         return 0;
       }
@@ -583,10 +580,25 @@ handleKill() {
 int handleStop(){
   struct proc* currProc = myproc();
   if((currProc->state==RUNNING || currProc->state==RUNNABLE) && !currProc->frozen){
-    cprintf("handle stop\n");
     acquire(&ptable.lock);
     currProc->frozen=1;
     release(&ptable.lock);
+    int contFlag = 1<<SIGCONT;
+    int flag=1;
+    setSigMask(currProc->oldMask); //retrieve old mask to listen to SIGCONT
+    while(flag==1){
+      if((currProc->pendingSigs&contFlag)==0){
+        yield();
+      }else{
+        cprintf("releasing\n");
+        acquire(&ptable.lock);
+        currProc->frozen=0;
+        turnOffBit(SIGSTOP,&currProc->pendingSigs);
+        turnOffBit(SIGCONT,&currProc->pendingSigs);
+        release(&ptable.lock);
+        flag=0;
+      }
+    }
     cprintf("finished handling stop\n");
     return 0;
   }
@@ -630,7 +642,8 @@ setSigMask(uint mask){
 void sigret(void) {
   acquire(&ptable.lock);
   struct proc *p = myproc();
-  p->tf = p->usrTFbackup;
+  copyTF(p->tf,p->usrTFbackup);
+  cprintf("eip is now:%p\n",p->tf->eip);
   p->sigMask = p->oldMask;
   release(&ptable.lock);
 }

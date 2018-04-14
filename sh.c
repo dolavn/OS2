@@ -143,7 +143,7 @@ getcmd(char *buf, int nbuf)
 int print=0;
 
 void changeNum(int a){
-  print=1;
+  print=a==5?1:0;
 }
 /*
 static inline int cas(volatile void *addr, int expected, int newval) {
@@ -184,17 +184,23 @@ main(void)
       break;
     }
   }
+  
+
   signal(5,&changeNum);
+  signal(6,&changeNum);
   int pid=fork1();
 
   if(pid == 0){
     while(1){
-      if(print){printf(2,"printing\n");}
+      if(0){printf(2,"printing\n");}
     }
   }
-  kill(pid,5);
+  int type=17;
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
+    kill(pid,type);
+    printf(2,"kill(%d,%d)\n",pid,type);
+    type=type==17?19:17;
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n
