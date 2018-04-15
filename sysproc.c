@@ -64,7 +64,8 @@ sys_sigprocmask(void){
   if(argint(0,&newMask)<0){
     return -1;
   }
-  return setSigMask(newMask);
+  return 0;
+  //return setSigMask(newMask);
 }
 
 int

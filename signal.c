@@ -10,7 +10,7 @@ extern void* sigRetCall(void);
 extern void* sigRetCallEnd(void);
 
 void copyTF(struct trapframe* dst,struct trapframe* src){
-  memmove(dst,src,sizeof(struct trapframe));
+  *dst=*src;
 }
 
 void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]){
@@ -31,54 +31,57 @@ void turnOffBit(int bit,uint* pendingSigs){
   *pendingSigs&=operand;
 }
 
-int handleSignal(){
+void handleSignal(){
   struct proc *p;
   p = myproc(); 
-  int ret=1;
   if(p!=0){
     if((p->tf->cs&3) != DPL_USER){
-      return 0;
+      return;
     }
-    p->oldMask = setSigMask(-1);
     char bits[NUM_OF_SIGS];
     getAllSignals(p->pendingSigs,bits);
     for(int i=0;i<NUM_OF_SIGS;++i){
-      if(bits[i]){
+      if((bits[i]) && !((1<<i)&p->sigMask)){
+        p->oldMask = setSigMask(-1);  
         if(p->sigHandlers[i]==(void*)SIG_DFL){ //kernel space handler
-          switch(i){
-              case SIGKILL:
-                  handleKill();
-                  break;
-              case SIGSTOP:
-                  handleStop();
-                  break;
-              case SIGCONT:
-                  break;
-              default:
-                  handleKill();
-                  break;
-          }
+            switch(i){
+                case SIGKILL:
+                    handleKill();
+                    break;
+                case SIGSTOP:
+                    handleStop();
+                    break;
+                case SIGCONT:
+                    break;
+                default:
+                    handleKill();
+                    break;
+            }
+            setSigMask(p->oldMask);
+            uint pendingSigs = p->pendingSigs;
+            turnOffBit(i,&pendingSigs);
+            setPendingSignals(pendingSigs);
         }else{ //user space handler
-          copyTF(p->usrTFbackup,p->tf);
-          p->tf->eip = (uint)(p->sigHandlers[i]);
-          int param = i;
-          uint funcSize = sigRetCallEnd-sigRetCall;
-          p->tf->esp = p->tf->esp-funcSize;
-          memmove((void*)(p->tf->esp),sigRetCall,funcSize);
-          void* sigFunc = (void*)p->tf->esp; //address to function on stack
-          while(p->tf->esp%4!=0){p->tf->esp--;} 
-          p->tf->esp = p->tf->esp-4;
-          memmove((void*)(p->tf->esp),&param,4);
-          p->tf->esp = p->tf->esp-4;
-          memmove((void*)(p->tf->esp),&sigFunc,4);
+            copyTF(p->usrTFbackup,p->tf);
+            p->tf->eip = (uint)(p->sigHandlers[i]);
+            int param = i;
+            uint funcSize = sigRetCallEnd-sigRetCall;
+            p->tf->esp = p->tf->esp-funcSize;
+            memmove((void*)(p->tf->esp),sigRetCall,funcSize);
+            void* sigFunc = (void*)p->tf->esp; //address to function on stack
+            while(p->tf->esp%4!=0){p->tf->esp--;} 
+            p->tf->esp = p->tf->esp-4;
+            memmove((void*)(p->tf->esp),&param,4);
+            p->tf->esp = p->tf->esp-4;
+            memmove((void*)(p->tf->esp),&sigFunc,4);
+            uint pendingSigs = p->pendingSigs;
+            turnOffBit(i,&pendingSigs);
+            setPendingSignals(pendingSigs);
+            return;
         }
-        uint pendingSigs = p->pendingSigs;
-        turnOffBit(i,&pendingSigs);
-        setPendingSignals(pendingSigs);
       }
     }
-    setSigMask(p->oldMask);
   }
-  return ret;
+  return;
 }
 

@@ -23,9 +23,7 @@ alltraps:
   # Return falls through to trapret...
 .globl trapret
 trapret:
-  push %eax #saves value of eax
   call handleSignal
-  pop %eax #retrieves value of eax
   popal
   popl %gs
   popl %fs
