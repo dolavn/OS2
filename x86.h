@@ -1,17 +1,19 @@
 // Routines to let C code use special x86 instructions.
+#define ZF_mask 0x0040
+#define ZF_pos  6
 
 static inline int cas(volatile void *addr, int expected, int newval) {
   int ans;
-  asm("push %%eax;"
-      "push %%ebx;"
-      "movl %0, %%eax;"//"": "a" (expected) : ", %eax\n\t"
-      "movl (%1), %%ebx;"//"": "d" (*addr) : "), %ebx\n\t"
-      "lock cmpxchg %%ebx, %0;"//"($"+addr+")\n\t"
-      "pushfl;"
-      "popl %%eax;"
-      : "=a" (ans)
-      : "r" (expected) , "r" (addr)
-      );
+  asm volatile("lock cmpxchgl %3, (%2);"
+               "pushfl;"
+               "popl %%eax;"
+               "movl %%eax, %0;"
+               : "=m" (ans)
+               : "a" (expected) , "b" (addr) , "r" (newval)
+               : "memory"
+               );
+  ans &= ZF_mask;
+  ans >>= ZF_pos;
   return ans;
 }
 
