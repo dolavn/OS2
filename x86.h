@@ -9,7 +9,7 @@ static inline int cas(volatile void *addr, int expected, int newval) {
                "popl %%eax;"
                "movl %%eax, %0;"
                : "=m" (ans)
-               : "a" (expected) , "b" (addr) , "r" (newval)
+               : "a" (expected) , "c" (addr) , "r" (newval)
                : "memory"
                );
   ans &= ZF_mask;

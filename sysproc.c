@@ -7,17 +7,23 @@
 #include "mmu.h"
 #include "proc.h"
 
+static int sharedCounter=0;
+
 //////////////////stam////////////////////////
 int
 sys_cascall(void) {
-  int counter;
-  if(argint(0,&counter)<0) return -1;
-  
-  int old = counter;
-  while (!cas(&counter, old, old+1)) old = counter;
+  // int counter;
+  // if(argint(0,&counter)<0) return -1;
+  // cprintf("%d\n", counter);
+  int old;
+  do{
+    old = sharedCounter;
+  }while (!cas(&sharedCounter, old, old+1)) ;
+
+  // sharedCounter++;
   // cprintf("%d\n",cas(&counter, old, 2));
   // cprintf("%d\n",counter);
-  return counter;
+  return sharedCounter;
 }
 // static inline int sys_cas(volatile void *addr, int expected, int newval) {
 //   int ans;
