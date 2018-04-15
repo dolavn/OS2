@@ -7,6 +7,38 @@
 #include "mmu.h"
 #include "proc.h"
 
+//////////////////stam////////////////////////
+int
+sys_cascall(void) {
+  int counter;
+  if(argint(0,&counter)<0) return -1;
+  
+  int old = counter;
+  while (!cas(&counter, old, old+1)) old = counter;
+  // cprintf("%d\n",cas(&counter, old, 2));
+  // cprintf("%d\n",counter);
+  return counter;
+}
+// static inline int sys_cas(volatile void *addr, int expected, int newval) {
+//   int ans;
+//   asm volatile("movl %1, %%eax;"//"": "a" (expected) : ", %eax\n\t"
+//                "movl (%2), %%ebx;"//"": "d" (*addr) : "), %ebx\n\t"
+//                "lock cmpxchg %%ebx, %3;"//"($"+addr+")\n\t"
+//                "pushfl;"
+//                "popl %%eax;"
+//                "movl %%eax, %0;"
+//                // get ZF from eax and return
+//                : "=r" (ans)
+//                : "r" (expected) , "r" (addr) , "r" (newval)
+//                : "eax" , "ebx"
+//                );
+//   ans &= ZF_mask;
+//   ans >>= ZF_pos;
+//   return ans;
+// }
+////////////////////////////////////////////
+
+
 int
 sys_sigret(void) {
   sigret();

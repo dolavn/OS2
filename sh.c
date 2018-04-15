@@ -161,18 +161,13 @@ static inline int cas(volatile void *addr, int expected, int newval) {
   return ans;
 }
 */
-static inline int cas(volatile void *addr, int expected, int newval) {
-  int c = expected+newval;
-  return c;
-}
+// static inline int cas(volatile void *addr, int expected, int newval) {
+//   int c = expected+newval;
+//   return c;
+// }
 int
 main(void)
 {
-
-  int counter = 0;
-  int b = 0;
-  printf(2, "cas ans: %d , counter: %d\n", (int) cas(&counter, b, b+1), counter);
-  // printf(2,"%d\n", counter);
 
   static char buf[100];
   int fd;
@@ -184,7 +179,7 @@ main(void)
       break;
     }
   }
-  
+
 
   signal(5,&changeNum);
   signal(6,&changeNum);

@@ -27,6 +27,7 @@ int uptime(void);
 uint sigprocmask(uint);
 sighandler_t signal(int,sighandler_t);
 void sigret(void);
+int cascall(void);
 
 // ulib.c
 int stat(char*, struct stat*);
