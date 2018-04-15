@@ -643,7 +643,6 @@ void sigret(void) {
   acquire(&ptable.lock);
   struct proc *p = myproc();
   copyTF(p->tf,p->usrTFbackup);
-  cprintf("eip is now:%p\n",p->tf->eip);
   p->sigMask = p->oldMask;
   release(&ptable.lock);
 }

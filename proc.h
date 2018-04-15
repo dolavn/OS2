@@ -66,7 +66,7 @@ sighandler_t setSignalHandler(int,sighandler_t);
 int handleKill();
 int handleStop();
 
-int handleSignal();
+void handleSignal();
 void turnOffBit(int,uint*);
 void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]);
 void copyTF(struct trapframe*,struct trapframe*);
