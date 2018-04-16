@@ -1756,7 +1756,9 @@ main(int argc, char *argv[])
     exit();
   }
   close(open("usertests.ran", O_CREATE));
-
+  
+  validatetest();
+  
   argptest();
   createdelete();
   linkunlink();

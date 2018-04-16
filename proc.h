@@ -57,6 +57,7 @@ struct proc {
   uint oldMask;
   void* sigHandlers[NUM_OF_SIGS];
   struct trapframe* usrTFbackup;
+  int handlingSignal;
 };
 
 uint setSigMask(uint);
@@ -66,10 +67,11 @@ sighandler_t setSignalHandler(int,sighandler_t);
 int handleKill();
 int handleStop();
 
-void handleSignal();
+void handleSignal(struct trapframe*);
 void turnOffBit(int,uint*);
 void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]);
 void copyTF(struct trapframe*,struct trapframe*);
+void printTF(struct trapframe*); /*DELETE THIS*/
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss

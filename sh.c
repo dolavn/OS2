@@ -1,5 +1,3 @@
-// Shell.
-
 #include "types.h"
 #include "user.h"
 #include "fcntl.h"
@@ -140,8 +138,10 @@ getcmd(char *buf, int nbuf)
     return -1;
   return 0;
 }
+
 int print=0;
 int numToPrint=2;
+
 void changeNum(int a){
   print=a==5?1:0;
 }
@@ -188,7 +188,7 @@ main(void)
       break;
     }
   }
-  
+  /*
 
   signal(5,&changeNum);
   signal(6,&changeNum);
@@ -200,13 +200,13 @@ main(void)
       if(print){printf(2,"printing %d\n",numToPrint);}
     }
   }
-  int type=5;
+  int type=5;*/
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
-    kill(pid,type);
+    /*kill(pid,type);
     kill(pid,12);
     printf(2,"kill(%d,%d)\n",pid,type);
-    type=type==5?6:5;
+    type=type==5?6:5;*/
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n

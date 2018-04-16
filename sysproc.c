@@ -20,8 +20,8 @@ sys_signal(void){
   if(argint(0,&signum)<0){
     return -1;
   }
-  if(argptr(1,(char**)(&handler),sizeof(int*))<0){
-    return -1;
+  if(argptr(1,(char**)(&handler),sizeof(void*))<0){
+    return (int)setSignalHandler(signum,(void*)SIG_IGN);  
   }
   return (int)setSignalHandler(signum,handler);
 }
@@ -32,8 +32,7 @@ sys_sigprocmask(void){
   if(argint(0,&newMask)<0){
     return -1;
   }
-  return 0;
-  //return setSigMask(newMask);
+  return setSigMask(newMask);
 }
 
 int
