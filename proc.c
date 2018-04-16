@@ -292,7 +292,7 @@ wait(void)
   int havekids, pid;
   struct proc *curproc = myproc();
 
-  acquire(&ptable.lock);
+  // acquire(&ptable.lock);
   for(;;){
     // Scan through table looking for exited children.
     havekids = 0;
@@ -300,7 +300,7 @@ wait(void)
       if(p->parent != curproc)
         continue;
       havekids = 1;
-      if(p->state == ZOMBIE){
+      if(cas(&p->state, ZOMBIE, -UNUSED)){
         // Found one.
         pid = p->pid;
         kfree(p->kstack);
@@ -311,14 +311,14 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
-        release(&ptable.lock);
+        // release(&ptable.lock);
         return pid;
       }
     }
 
     // No point waiting if we don't have any children.
     if(!havekids || curproc->killed){
-      release(&ptable.lock);
+      // release(&ptable.lock);
       return -1;
     }
 
