@@ -60,7 +60,7 @@ argptr(int n, char **pp, int size)
 {
   int i;
   struct proc *curproc = myproc();
- 
+
   if(argint(n, &i) < 0)
     return -1;
   if(size < 0 || (uint)i >= curproc->sz || (uint)i+size > curproc->sz)
@@ -106,6 +106,7 @@ extern int sys_uptime(void);
 extern int sys_sigprocmask(void);
 extern int sys_signal(void);
 extern int sys_sigret(void);
+extern int sys_cascall(void);////////////////stam//////////////
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -132,6 +133,7 @@ static int (*syscalls[])(void) = {
 [SYS_sigprocmask] sys_sigprocmask,
 [SYS_signal] sys_signal,
 [SYS_sigret] sys_sigret,
+[SYS_cascall] sys_cascall,///////////////////////////////////stam///////
 };
 
 void
