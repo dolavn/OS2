@@ -7,9 +7,10 @@
 #include "mmu.h"
 #include "proc.h"
 
-static int sharedCounter=0;
 
 //////////////////stam////////////////////////
+static int sharedCounter=0;
+
 int
 sys_cascall(void) {
   // int counter;

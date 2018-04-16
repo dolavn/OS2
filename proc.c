@@ -14,7 +14,8 @@ struct {
 
 static struct proc *initproc;
 
-int nextpid = 1;
+static int curr_pid = 0;
+
 extern void forkret(void);
 extern void trapret(void);
 
@@ -65,15 +66,14 @@ myproc(void) {
   return p;
 }
 
-
 int
 allocpid(void)
 {
-  int pid;
-  acquire(&ptable.lock);
-  pid = nextpid++;
-  release(&ptable.lock);
-  return pid;
+  int old;
+  do {
+    old = curr_pid;
+  } while (!cas(&curr_pid, old, old + 1)) ;
+  return old + 1;
 }
 
 
@@ -88,21 +88,17 @@ allocproc(void)
   struct proc *p;
   char *sp;
 
-  acquire(&ptable.lock);
-
+  // pushcli();
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == UNUSED)
+    if (cas(&p->state, UNUSED, EMBRYO))
       goto found;
 
-  release(&ptable.lock);
-  return 0;
+  // popcli();
+  return 0; // no space in ptable
 
 found:
-  p->state = EMBRYO;
   p->frozen = 0;
-  release(&ptable.lock);
   p->pid = allocpid();
-
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
@@ -128,6 +124,7 @@ found:
   int i;
   for (i=0; i<NUM_OF_SIGS; i++) p->sigHandlers[i] = (void*)SIG_DFL;
 
+  // popcli();
   return p;
 }
 
