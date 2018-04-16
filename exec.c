@@ -103,7 +103,7 @@ exec(char *path, char **argv)
   freevm(oldpgdir);
 
   for (i=0; i<NUM_OF_SIGS; i++)
-    if ((int)curproc->sigHandlers[i] != SIG_DFL && (int)curproc->sigHandlers[i] != SIG_IGN)
+    if (curproc->sigHandlers[i] != (void*)SIG_DFL && curproc->sigHandlers[i] != (void*)SIG_IGN)
       curproc->sigHandlers[i] = (void*)SIG_DFL;
       
   return 0;

@@ -9,8 +9,14 @@
 extern void* sigRetCall(void);
 extern void* sigRetCallEnd(void);
 
+void printTF(struct trapframe* tf){
+  cprintf("--TRAP FRAME-- \neip:%p\neax:%d\nebx:%d\necx:%d\nedx:%d\nesp:%p\nebp:%p\n",tf->eip,tf->eax,tf->ebx,tf->ecx,tf->edx,tf->esp,tf->ebp);
+  cprintf("--END OF TRAP FRAME--\n");
+}
+
 void copyTF(struct trapframe* dst,struct trapframe* src){
-  *dst=*src;
+  //*dst=*src;
+  memmove(dst,src,sizeof(struct trapframe));
 }
 
 void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]){
@@ -31,17 +37,21 @@ void turnOffBit(int bit,uint* pendingSigs){
   *pendingSigs&=operand;
 }
 
-void handleSignal(){
+void handleSignal(struct trapframe* tf){
   struct proc *p;
   p = myproc(); 
   if(p!=0){
-    if((p->tf->cs&3) != DPL_USER){
+//     if(p->sigret==12){
+//       cprintf("handler again\n");
+//       printTF(p->tf);
+//     }
+    if (((tf->cs) & 3) != DPL_USER) {
       return;
     }
-    char bits[NUM_OF_SIGS];
-    getAllSignals(p->pendingSigs,bits);
+    //char bits[NUM_OF_SIGS];
+    //getAllSignals(p->pendingSigs,bits);
     for(int i=0;i<NUM_OF_SIGS;++i){
-      if((bits[i]) && !((1<<i)&p->sigMask)){
+      if((1<<i&p->pendingSigs) && !((1<<i)&p->sigMask)){
         p->oldMask = setSigMask(-1);  
         if(p->sigHandlers[i]==(void*)SIG_DFL){ //kernel space handler
             switch(i){
@@ -64,12 +74,14 @@ void handleSignal(){
         }else{ //user space handler
             copyTF(p->usrTFbackup,p->tf);
             p->tf->eip = (uint)(p->sigHandlers[i]);
+            //cprintf("before user handler:\n");
+            //printTF(p->tf);
             int param = i;
             uint funcSize = sigRetCallEnd-sigRetCall;
             p->tf->esp = p->tf->esp-funcSize;
             memmove((void*)(p->tf->esp),sigRetCall,funcSize);
             void* sigFunc = (void*)p->tf->esp; //address to function on stack
-            while(p->tf->esp%4!=0){p->tf->esp--;} 
+            //while(p->tf->esp%4!=0){p->tf->esp--;} 
             p->tf->esp = p->tf->esp-4;
             memmove((void*)(p->tf->esp),&param,4);
             p->tf->esp = p->tf->esp-4;
@@ -77,11 +89,15 @@ void handleSignal(){
             uint pendingSigs = p->pendingSigs;
             turnOffBit(i,&pendingSigs);
             setPendingSignals(pendingSigs);
+            p->handlingSignal=1;
             return;
         }
       }
     }
+//     if(p->sigret==12){
+//       cprintf("after handling\n");
+//       printTF(p->tf);
+//     }
   }
   return;
 }
-

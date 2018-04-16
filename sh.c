@@ -1,5 +1,3 @@
-// Shell.
-
 #include "types.h"
 #include "user.h"
 #include "fcntl.h"
@@ -140,11 +138,19 @@ getcmd(char *buf, int nbuf)
     return -1;
   return 0;
 }
+
 int print=0;
+int numToPrint=2;
 
 void changeNum(int a){
   print=a==5?1:0;
 }
+
+void setNum(int a){
+  numToPrint++;
+}
+
+
 /*
 static inline int cas(volatile void *addr, int expected, int newval) {
   int ans;
@@ -180,17 +186,17 @@ main(void)
     }
   }
 
-  // int k,t;
-  // int pid;
-  // for (k = 0; k < 10; k++) {
-  //   pid=fork1();
-  //   if (pid == 0) {
-  //     // if ((pid = fork1()) != 0)
-  //     for (t=0; t<150; t++) printf(2, "after %d , pid: %d\n",cascall(0), getpid());
-  //     // else printf(2, "my pid: %d\n", getpid());
-  //     break;
-  //   }
-  // }
+  // int shared_counter=0;
+  /*
+  int k,t;
+  int pid;
+  for (k = 0; k < 10; k++) {
+    pid=fork1();
+    if (pid == 0) {
+      for (t=0; t<150; t++) printf(2, "after %d\n",cascall(0));
+      break;
+    }
+  }*/
 
   // if (pid == 0) {
   //   printf(2, "before %d\n",shared_counter);
@@ -198,21 +204,22 @@ main(void)
   //   printf(2, "after %d\n",shared_counter);
   // }
 
-  // signal(5,&changeNum);
-  // signal(6,&changeNum);
-  // pid=fork1();
+  signal(5,&changeNum);
+  signal(6,&changeNum);
+  /*
+  int pid=fork1();
 
-  // if(pid == 0){
-  //   while(1){
-  //     if(0){printf(2,"printing\n");}
-  //   }
-  // }
-  // int type=17;
+  if(pid == 0){
+    while(1){
+      if(0){printf(2,"printing\n");}
+    }
+  }
+  int type=17;*/
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
-    // kill(pid,type);
-    // printf(2,"kill(%d,%d)\n",pid,type);
-    // type=type==17?19:17;
+    /*kill(pid,type);
+    printf(2,"kill(%d,%d)\n",pid,type);
+    type=type==17?19:17;*/
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n
