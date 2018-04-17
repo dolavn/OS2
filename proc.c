@@ -324,7 +324,9 @@ wait(void)
     }
 
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    acquire(&ptable.lock); //delete this
     sleep(curproc, &ptable.lock);  //DOC: wait-sleep
+    release(&ptable.lock); //delete this too
   }
 }
 
@@ -500,11 +502,9 @@ kill(int pid, int signum)
       if(p->state==ZOMBIE || p->state==UNUSED){
         return -1;
       }
-      acquire(&ptable.lock);
-      cprintf("signaling\n");
-      p->pendingSigs |= sig;
-      release(&ptable.lock);
-      cprintf("kill(%d,%d)\npendingSigs:%d\n",pid,signum,p->pendingSigs);
+      int pending = p->pendingSigs;
+      while(!cas(&p->pendingSigs,pending,pending|sig)){pending=p->pendingSigs;}
+      cprintf("kill(%d,%d)\n",pid,signum);
       return 0;
       break;
     }
@@ -556,23 +556,12 @@ procdump(void)
   }
 }
 
-void setPendingSignals(uint pendingSigs){
-  struct proc *p;
-  p = myproc();
-  acquire(&ptable.lock);
-  cprintf("setting signals\n");
-  p->pendingSigs=pendingSigs;
-  release(&ptable.lock);
-}
-
 int
 handleKill() {
   struct proc *p;
   p = myproc();
-  acquire(&ptable.lock);
   cprintf("killing\n");
-  p->killed = 1;
-  release(&ptable.lock);
+  p->killed=1;
   return 0;
 }
 
@@ -591,11 +580,9 @@ int handleStop(){
         yield();
       }else{
         cprintf("releasing\n");
-        acquire(&ptable.lock);
         currProc->frozen=0;
-        turnOffBit(SIGSTOP,&currProc->pendingSigs);
-        turnOffBit(SIGCONT,&currProc->pendingSigs);
-        release(&ptable.lock);
+        turnOffBit(SIGSTOP,currProc);
+        turnOffBit(SIGCONT,currProc);
         flag=0;
       }
     }
@@ -608,11 +595,7 @@ int handleStop(){
 int handleCont(){
   struct proc* currProc = myproc();
   if(currProc->frozen){
-    cprintf("handle cont\n");
-    acquire(&ptable.lock);
     currProc->frozen=0;
-    release(&ptable.lock);
-    cprintf("finished handling cont\n");
     return 0;
   }
   return -1;
@@ -621,33 +604,22 @@ int handleCont(){
 
 sighandler_t
 setSignalHandler(int signum,sighandler_t handler){
-  acquire(&ptable.lock);
   struct proc *curproc = myproc();
   sighandler_t ans = curproc->sigHandlers[signum];
   curproc->sigHandlers[signum] = handler;
-  release(&ptable.lock);
   return ans;
 }
 
 uint
 setSigMask(uint mask){
-  acquire(&ptable.lock);
-  cprintf("setting mask\n");
   struct proc *curproc = myproc();
   uint ans = curproc->sigMask;
   curproc->sigMask = mask;
-  release(&ptable.lock);
   return ans;
 }
 
 void sigret(void) {
-  //cprintf("sigret\n");
-  acquire(&ptable.lock);
   struct proc *p = myproc();
   copyTF(p->tf,p->usrTFbackup);
-  //cprintf("after sigret:\n");
-  //printTF(p->tf);
-  p->sigMask = p->oldMask;
-  //p->sigret=12;
-  release(&ptable.lock);
+  p->sigMask=p->oldMask;
 }

@@ -61,14 +61,13 @@ struct proc {
 };
 
 uint setSigMask(uint);
-void setPendingSignals(uint);
 sighandler_t setSignalHandler(int,sighandler_t);
 
 int handleKill();
 int handleStop();
 
 void handleSignal(struct trapframe*);
-void turnOffBit(int,uint*);
+void turnOffBit(int,struct proc*);
 void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]);
 void copyTF(struct trapframe*,struct trapframe*);
 void printTF(struct trapframe*); /*DELETE THIS*/

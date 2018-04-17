@@ -41,4 +41,3 @@ sigRetCall:
   movl $24,%eax
   int $64
 sigRetCallEnd:
-  movl $24,%eax

@@ -4,9 +4,11 @@
 
 int flag1=0;
 int flag2=0;
+int numToPrint=0;
 
 void setflag(int);
 void setflag2(int);
+void setNumToPrint(int);
 
 
 void killTest(){
@@ -22,7 +24,7 @@ void killTest(){
 }
 
 void basicTest(){
-  printf(2,"starting test\n");
+  printf(2,"starting basic test\n");
   signal(6,&setflag);
   signal(8,&setflag2);
   int pid=getpid();
@@ -50,9 +52,35 @@ void basicTest(){
   }
 }
 
+void multipleSignalsTest(){
+  signal(2,&setflag);
+  for(int i=3;i<9;++i){signal(i,&setNumToPrint);}
+  int child;
+  if((child=fork())==0){
+    while(1){
+      if(flag1){
+        printf(2,"I  signal(2,&setflag);'m printing number %d\n",numToPrint);
+      }
+      if(numToPrint==6){
+        printf(2,"Bye!\n");
+        numToPrint=0;
+        flag1=0;
+        exit();
+      }
+    }
+  }
+  printf(2,"Sending signal to child\n");
+  kill(child,2);
+  printf(2,"Sending multiple signal to child\n");
+  for(int i=3;i<9;++i){kill(child,i);}
+  wait();
+}
+
 int main(int argc,char** argv){
   killTest();
-  for(int i=0;i<5;++i)basicTest();
+  basicTest();
+  multipleSignalsTest();
+  multipleSignalsTest();
   exit();
 }
 
@@ -65,4 +93,8 @@ void setflag(int signum){
 void setflag2(int signum){
   flag2=1;
   return;
+}
+
+void setNumToPrint(int signum){
+  numToPrint++;
 }
