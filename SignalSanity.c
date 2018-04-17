@@ -1,6 +1,7 @@
 #include "types.h"
 #include "user.h"
 #include "fcntl.h"
+#define NUM_OF_CHILDREN 1
 
 int flag1=0;
 int flag2=0;
@@ -12,15 +13,16 @@ void setNumToPrint(int);
 
 
 void killTest(){
-  int child=fork();
-  if(child==0){
-    while(1){
-    
-    }
+  int children[NUM_OF_CHILDREN];
+  for(int i=0;i<NUM_OF_CHILDREN;++i){
+    children[i] = fork();
+    if(children[i]==0){while(1);exit();}
   }
-  kill(child,9);
+  for(int i=0;i<NUM_OF_CHILDREN;++i){
+    kill(children[i],9);
+  }
   wait();
-  printf(2,"Child killed!\n");
+  printf(2,"All children killed!\n");
 }
 
 void basicTest(){
@@ -59,7 +61,7 @@ void multipleSignalsTest(){
   if((child=fork())==0){
     while(1){
       if(flag1){
-        printf(2,"I  signal(2,&setflag);'m printing number %d\n",numToPrint);
+        printf(2,"I'm printing number %d\n",numToPrint);
       }
       if(numToPrint==6){
         printf(2,"Bye!\n");
@@ -71,15 +73,34 @@ void multipleSignalsTest(){
   }
   printf(2,"Sending signal to child\n");
   kill(child,2);
-  printf(2,"Sending multiple signal to child\n");
+  printf(2,"Sending multiple signals to child\n");
   for(int i=3;i<9;++i){kill(child,i);}
   wait();
 }
 
+void stopContTest(){
+  int child;
+  if((child=fork())==0){
+    while(1){
+      printf(2,"Running!!! lalalalal\n");
+    }
+  }
+  sleep(5);
+  printf(2,"Stopping child!\n");
+  kill(child,17);
+  while(!isStopped(child));
+  printf(2,"Child stopped!\n");
+  sleep(5);
+  kill(child,19);
+  while(isStopped(child));
+  kill(child,9);
+  printf(2,"child killed!\n");
+}
+
 int main(int argc,char** argv){
   killTest();
+  stopContTest();
   basicTest();
-  multipleSignalsTest();
   multipleSignalsTest();
   exit();
 }

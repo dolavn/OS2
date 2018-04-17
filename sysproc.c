@@ -45,6 +45,14 @@ sys_cascall(void) {
 // }
 ////////////////////////////////////////////
 
+int
+sys_isStopped(void){
+  int pid;
+  if(argint(0,&pid) < 0){
+    return -1;
+  }
+  return isStopped(pid);
+}
 
 int
 sys_sigret(void) {

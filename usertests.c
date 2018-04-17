@@ -1494,7 +1494,7 @@ sbrktest(void)
     printf(stdout, "sbrk downsize failed, a %x c %x\n", a, c);
     exit();
   }
-  //STOPHERE
+  
   // can we read the kernel's memory?
   for(a = (char*)(KERNBASE); a < (char*) (KERNBASE+2000000); a += 50000){
     ppid = getpid();

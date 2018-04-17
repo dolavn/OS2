@@ -107,6 +107,7 @@ extern int sys_sigprocmask(void);
 extern int sys_signal(void);
 extern int sys_sigret(void);
 extern int sys_cascall(void);////////////////stam//////////////
+extern int sys_isStopped(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -134,6 +135,7 @@ static int (*syscalls[])(void) = {
 [SYS_signal] sys_signal,
 [SYS_sigret] sys_sigret,
 [SYS_cascall] sys_cascall,///////////////////////////////////stam///////
+[SYS_isStopped] sys_isStopped,
 };
 
 void

@@ -556,6 +556,18 @@ procdump(void)
   }
 }
 
+int 
+isStopped(int pid){
+  for(struct proc* p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state ==  UNUSED)
+      continue;
+    if(p->pid == pid){
+      return p->frozen;
+    }
+  }
+  return -1;
+}
+
 int
 handleKill() {
   struct proc *p;

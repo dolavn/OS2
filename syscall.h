@@ -24,3 +24,4 @@
 #define SYS_signal 23
 #define SYS_sigret 24
 #define SYS_cascall 25///////////////////stam///////////////////////
+#define SYS_isStopped 26

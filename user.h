@@ -28,6 +28,7 @@ uint sigprocmask(uint);
 sighandler_t signal(int,sighandler_t);
 void sigret(void);
 int cascall(int);
+int isStopped(int);
 
 // ulib.c
 int stat(char*, struct stat*);

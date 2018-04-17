@@ -127,6 +127,7 @@ uint            sigprocmask(uint sigmask);
 sighandler_t    signal(int,sighandler_t);
 void            sigret(void);
 int             cascall(void);
+int             isStopped(int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
