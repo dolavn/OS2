@@ -188,16 +188,16 @@ main(void)
 
   // int shared_counter=0;
 
-  int k,t;
-  int pid;
-  for (k = 0; k < 10; k++) {
-    pid=fork1();
-    if (pid == 0) {
-      fork1();
-      for (t=0; t<150; t++) printf(2, "after %d\n",cascall(0));
-      break;
-    }
-  }
+//   int k,t;
+//   int pid;
+//   for (k = 0; k < 10; k++) {
+//     pid=fork1();
+//     if (pid == 0) {
+//       fork1();
+//       for (t=0; t<150; t++) printf(2, "after %d\n",cascall(0));
+//       break;
+//     }
+//   }
 
   // if (pid == 0) {
   //   printf(2, "before %d\n",shared_counter);

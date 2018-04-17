@@ -71,6 +71,7 @@ void turnOffBit(int,struct proc*);
 void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]);
 void copyTF(struct trapframe*,struct trapframe*);
 void printTF(struct trapframe*); /*DELETE THIS*/
+void printPtable(); /*DELETE THIS*/
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss
