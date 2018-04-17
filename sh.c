@@ -187,16 +187,17 @@ main(void)
   }
 
   // int shared_counter=0;
-  /*
+
   int k,t;
   int pid;
   for (k = 0; k < 10; k++) {
     pid=fork1();
     if (pid == 0) {
+      fork1();
       for (t=0; t<150; t++) printf(2, "after %d\n",cascall(0));
       break;
     }
-  }*/
+  }
 
   // if (pid == 0) {
   //   printf(2, "before %d\n",shared_counter);
@@ -204,8 +205,8 @@ main(void)
   //   printf(2, "after %d\n",shared_counter);
   // }
 
-  signal(5,&changeNum);
-  signal(6,&changeNum);
+  // signal(5,&changeNum);
+  // signal(6,&changeNum);
   /*
   int pid=fork1();
 
@@ -216,6 +217,7 @@ main(void)
   }
   int type=17;*/
   // Read and run input commands.
+
   while(getcmd(buf, sizeof(buf)) >= 0){
     /*kill(pid,type);
     printf(2,"kill(%d,%d)\n",pid,type);
