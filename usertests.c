@@ -1473,7 +1473,7 @@ sbrktest(void)
     printf(stdout, "sbrk deallocation produced wrong address, a %x c %x\n", a, c);
     exit();
   }
-
+  //
   // can one re-allocate that page?
   a = sbrk(0);
   c = sbrk(4096);
@@ -1481,6 +1481,7 @@ sbrktest(void)
     printf(stdout, "sbrk re-allocation failed, a %x c %x\n", a, c);
     exit();
   }
+  
   if(*lastaddr == 99){
     // should be zero
     printf(stdout, "sbrk de-allocation didn't really deallocate\n");
@@ -1493,7 +1494,7 @@ sbrktest(void)
     printf(stdout, "sbrk downsize failed, a %x c %x\n", a, c);
     exit();
   }
-
+  //STOPHERE
   // can we read the kernel's memory?
   for(a = (char*)(KERNBASE); a < (char*) (KERNBASE+2000000); a += 50000){
     ppid = getpid();
@@ -1756,9 +1757,7 @@ main(int argc, char *argv[])
     exit();
   }
   close(open("usertests.ran", O_CREATE));
-  
-  validatetest();
-  
+  sbrktest();
   argptest();
   createdelete();
   linkunlink();
