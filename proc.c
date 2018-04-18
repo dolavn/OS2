@@ -10,6 +10,7 @@
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
+  struct trapframe tfBackups[NPROC];
 } ptable;
 
 static struct proc *initproc;
@@ -109,11 +110,11 @@ found:
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
-
+  
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
   p->tf = (struct trapframe*)sp;
-
+  p->usrTFbackup = &ptable.tfBackups[p-ptable.proc];
   // Set up new context to start executing at forkret,
   // which returns to trapret.
   sp -= 4;
@@ -553,7 +554,7 @@ kill(int pid, int signum)
 
       int pending = p->pendingSigs;
       while(!cas(&p->pendingSigs,pending,pending|sig)){pending=p->pendingSigs;}
-      cprintf("kill(%d,%d)\n",pid,signum);
+      //cprintf("kill(%d,%d)\n",pid,signum);
       popcli();
       return 0;
       break;
@@ -622,7 +623,6 @@ int
 handleKill() {
   struct proc *p;
   p = myproc();
-  cprintf("killing\n");
   p->killed=1;
   return 0;
 }

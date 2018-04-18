@@ -98,13 +98,12 @@ void stopContTest(){
 }
 
 int main(int argc,char** argv){
-  killTest();
-  stopContTest();
-  basicTest();
-  multipleSignalsTest();
+  //killTest();
+  //stopContTest();
+  for(int i=0;i<50;++i){basicTest();}
+  for(int i=0;i<50;++i){multipleSignalsTest();}
   exit();
 }
-
 
 void setflag(int signum){
   flag1=1;
