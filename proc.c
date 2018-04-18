@@ -137,7 +137,7 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-  
+
   p = allocproc();
 
   initproc = p;
@@ -273,7 +273,7 @@ exit(void)
   // Parent might be sleeping in wait().
   pushcli();
   wakeup1(curproc->parent);
-  
+
   // Pass abandoned children to init.
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->parent == curproc){
@@ -286,8 +286,8 @@ exit(void)
   // Jump into the scheduler, never to return.
   // curproc->state = ZOMBIE;
   cas(&curproc->state, RUNNING, -ZOMBIE); //-
-  // release(&ptable.lock);///
-  pushcli();
+
+  //pushcli();
   sched();
   panic("zombie exit");
 }
@@ -337,7 +337,7 @@ wait(void)
 
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
 
-    //popcli();
+    // popcli();
     sleep(curproc, &ptable.lock);  //DOC: wait-sleep
   }
 }
@@ -381,7 +381,7 @@ scheduler(void)
         if(cas(&p->state, -ZOMBIE, ZOMBIE)) continue;
         // Process is done running for now.
         // It should have changed its p->state before coming back.
-        
+
         // popcli();
         // continue;
       }
@@ -411,8 +411,9 @@ sched(void)
   // if(!holding(&ptable.lock))
   //   panic("sched ptable.lock");
   // popcli();
-  //if(mycpu()->ncli != 1)
-  //  panic("sched locks");
+  if(mycpu()->ncli != 1){
+    panic("sched locks");
+  }
   if(p->state == RUNNING)
     panic("sched running");
   if(readeflags()&FL_IF)
@@ -443,7 +444,7 @@ forkret(void)
   static int first = 1;
   // Still holding ptable.lock from scheduler.
   // release(&ptable.lock);
-
+  popcli();
   if (first) {
     // Some initialization functions must be run in the context
     // of a regular process (e.g., they call sleep), and thus cannot
@@ -469,6 +470,8 @@ sleep(void *chan, struct spinlock *lk)
   if(lk == 0)
     panic("sleep without lk");
 
+  // cprintf("sleep start\tncli: %d\n", mycpu()->ncli);
+
   // Must acquire ptable.lock in order to
   // change p->state and then call sched.
   // Once we hold ptable.lock, we can be
@@ -478,22 +481,27 @@ sleep(void *chan, struct spinlock *lk)
   if(lk != &ptable.lock){  //DOC: sleeplock0
     //acquire(&ptable.lock);  //DOC: sleeplock1
     pushcli();
+    // cprintf("sleep middle\tncli: %d\n", mycpu()->ncli);
     release(lk);
   }
   // Go to sleep.
   //pushcli();
-  p->chan = chan;
+  if(!cas(&p->chan,0,(int)chan)){
+    panic("already sleeps on some channel");
+  }
   // p->state = SLEEPING;
   cas(&p->state, RUNNING, -SLEEPING);
   // popcli();
 
-  // acquire(&ptable.lock);
-  //cprintf("entering sched sleep\n");////////////////////////////////////////////////////////
+  //cprintf("entering sched sleep\n"); ////////////////////////////////////////////////////////
+  // cprintf("sleep sched\tncli: %d\n", mycpu()->ncli);
+
   sched();
-  //release(&ptable.lock);
 
   // Tidy up.
-  p->chan = 0;
+  /*if(!cas(&p->chan,(int)chan,0)){
+    panic("sleep");
+  }*/
 
   // popcli();
 
@@ -606,7 +614,7 @@ procdump(void)
   }
 }
 
-int 
+int
 isStopped(int pid){
   for(struct proc* p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state ==  UNUSED)
