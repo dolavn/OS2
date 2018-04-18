@@ -289,7 +289,6 @@ exit(void)
   cas(&curproc->state, RUNNING, -ZOMBIE); //-
 
   //pushcli();
-  cprintf("%d exiting\n",curproc->pid);
   sched();
   panic("zombie exit");
 }
@@ -339,7 +338,6 @@ wait(void)
 
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
 
-    // popcli();
     sleep(curproc, &ptable.lock);  //DOC: wait-sleep
   }
 }
@@ -414,6 +412,7 @@ sched(void)
   //   panic("sched ptable.lock");
   // popcli();
   if(mycpu()->ncli != 1){
+    cprintf("ncli=%d\n",mycpu()->ncli);
     panic("sched locks");
   }
   if(p->state == RUNNING)
@@ -480,33 +479,25 @@ sleep(void *chan, struct spinlock *lk)
   // guaranteed that we won't miss any wakeup
   // (wakeup runs with ptable.lock locked),
   // so it's okay to release lk.
+
   if(lk != &ptable.lock){  //DOC: sleeplock0
     //acquire(&ptable.lock);  //DOC: sleeplock1
     pushcli();
+  }
+  if(!cas(&p->chan,0,(int)chan)){
+    panic("already sleeps on some channel");
+  }
+  if(!cas(&p->state, RUNNING, -SLEEPING)){
+    panic("sleep running");
+  }
+  if(lk != &ptable.lock){
     // cprintf("sleep middle\tncli: %d\n", mycpu()->ncli);
     release(lk);
   }
   // Go to sleep.
   //pushcli();
-  if(!cas(&p->chan,0,(int)chan)){
-    panic("already sleeps on some channel");
-  }
-  // p->state = SLEEPING;
-  cas(&p->state, RUNNING, -SLEEPING);
-  // popcli();
-
-  //cprintf("entering sched sleep\n"); ////////////////////////////////////////////////////////
-  // cprintf("sleep sched\tncli: %d\n", mycpu()->ncli);
-
   sched();
-
-  // Tidy up.
-  /*if(!cas(&p->chan,(int)chan,0)){
-    panic("sleep");
-  }*/
-
-  // popcli();
-
+  
   // Reacquire original lock.
   if(lk != &ptable.lock){  //DOC: sleeplock2
     //release(&ptable.lock);
@@ -527,10 +518,11 @@ wakeup1(void *chan)
   //   if(p->state == SLEEPING && p->chan == chan)
   //     p->state = RUNNABLE;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    while(p->state == -SLEEPING);
-    if(p->state == SLEEPING) {//& p->chan == chan)
-      if(cas(&p->chan, (int) chan, 0))
+    if(p->state == SLEEPING || p->state == -SLEEPING) {//& p->chan == chan)
+      if(cas(&p->chan, (int) chan, 0)){
+        while(p->state == -SLEEPING);
         cas(&p->state, SLEEPING, RUNNABLE);
+      }
     }
   }
 }
@@ -563,7 +555,15 @@ kill(int pid, int signum)
 
       int pending = p->pendingSigs;
       while(!cas(&p->pendingSigs,pending,pending|sig)){pending=p->pendingSigs;}
-
+      if(p->sigHandlers[signum] == (void*)SIG_DFL && signum != SIGSTOP && signum != SIGCONT){
+        if(p->state == SLEEPING || p->state == -SLEEPING) {//& p->chan == chan)
+            int chan = (int)(p->chan);
+            if(cas(&p->chan, (int) chan, 0)){
+                while(p->state == -SLEEPING);
+                cas(&p->state, SLEEPING, RUNNABLE);
+            }
+        }
+      }
       //cprintf("kill(%d,%d)\n",pid,signum);
       popcli();
       return 0;
@@ -601,7 +601,7 @@ procdump(void)
   uint pc[10];
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->state == UNUSED || p->state == -UNUSED)
+    if(p->state == UNUSED)
       continue;
     if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
       state = states[p->state];

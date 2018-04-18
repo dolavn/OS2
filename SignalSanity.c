@@ -28,13 +28,14 @@ void killTest(){
 
 void multipleChildrenTest(){
   numToPrint=0;
-  int numOfSigs=2;
+  int numOfSigs=32;
   for(int i=0;i<numOfSigs;++i){
     signal(i,&setNumToPrint);
   }
   int pid=getpid();
   for(int i=0;i<numOfSigs;++i){
     if(fork()==0){
+      sleep(100);
       int signum = i;
       kill(pid,signum);
       printf(2,"%d sent signal (%d,%d)\n",getpid(),pid,signum);
@@ -48,7 +49,7 @@ void multipleChildrenTest(){
       break;
     }
   }
-  for(int i=0;i<32;++i){
+  for(int i=0;i<numOfSigs;++i){
     signal(i,(void*)-1);
   }
 }
@@ -161,11 +162,11 @@ void stopContTest(){
 }
 
 int main(int argc,char** argv){
+  multipleChildrenTest();
   //killTest();
   //stopContTest();
-  //communicationTest();
+  communicationTest();
   //multipleSignalsTest();
-  multipleChildrenTest();
   exit();
 }
 

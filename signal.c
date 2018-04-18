@@ -68,8 +68,9 @@ void handleSignal(struct trapframe* tf){
             setSigMask(p->oldMask);
             turnOffBit(i,p);
         }else{ //user space handler
-            cprintf("user space handler\n");
+            //cprintf("user space handler\n");
             copyTF(p->usrTFbackup,p->tf);
+            //printTF(p->tf);
             p->tf->eip = (uint)(p->sigHandlers[i]);
             int param = i;
             uint funcSize = sigRetCallEnd-sigRetCall;

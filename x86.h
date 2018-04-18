@@ -2,7 +2,6 @@
 #define ZF_mask 0x0040
 #define ZF_pos  6
 
-
 static inline int cas(volatile void *addr, int expected, int newval) {
   int ans;
   asm volatile("lock cmpxchgl %3, (%2);"
