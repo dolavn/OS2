@@ -1,7 +1,7 @@
 #include "types.h"
 #include "user.h"
 #include "fcntl.h"
-#define NUM_OF_CHILDREN 1
+#define NUM_OF_CHILDREN 10
 
 int flag1=0;
 int flag2=0;
@@ -10,9 +10,10 @@ int numToPrint=0;
 void setflag(int);
 void setflag2(int);
 void setNumToPrint(int);
-
+void setMask(int);
 
 void killTest(){
+  printf(2,"starting kill test\n");
   int children[NUM_OF_CHILDREN];
   for(int i=0;i<NUM_OF_CHILDREN;++i){
     children[i] = fork();
@@ -25,8 +26,69 @@ void killTest(){
   printf(2,"All children killed!\n");
 }
 
-void basicTest(){
-  printf(2,"starting basic test\n");
+void multipleChildrenTest(){
+  numToPrint=0;
+  int numOfSigs=2;
+  for(int i=0;i<numOfSigs;++i){
+    signal(i,&setNumToPrint);
+  }
+  int pid=getpid();
+  for(int i=0;i<numOfSigs;++i){
+    if(fork()==0){
+      int signum = i;
+      kill(pid,signum);
+      printf(2,"%d sent signal (%d,%d)\n",getpid(),pid,signum);
+      exit();
+    }
+  }
+  while(1){
+    printf(2,"%d\n",numToPrint);
+    if(numToPrint==numOfSigs){
+      printf(2,"All signals received!\n");
+      break;
+    }
+  }
+  for(int i=0;i<32;++i){
+    signal(i,(void*)-1);
+  }
+}
+
+void maskChangeTest(){
+  printf(2,"starting mask change test\n");
+  signal(2,&setMask);
+  signal(8,&setflag2);
+  int pid=getpid();
+  int child=fork();
+  if(child==0){
+    int count=0;
+    while(1){
+      if(flag1){
+        count++;
+        flag1=0;
+        printf(2,"sending signal to father\n");
+        kill(pid,8);
+      }
+      if(count==2){
+        exit();
+      }
+    }
+  }
+  printf(2,"sending signal to child\n");
+  kill(child,2);
+  int count=0;
+  while(1){
+    if(flag2){
+      count++;
+      printf(2,"received signal from child\n");
+      printf(2,"trying to send signal again. Then sleeping for 1000\n");
+      kill(child,2);
+      sleep(1000);
+    }
+  }
+}
+
+void communicationTest(){
+  printf(2,"starting communication test\n");
   signal(6,&setflag);
   signal(8,&setflag2);
   int pid=getpid();
@@ -55,6 +117,7 @@ void basicTest(){
 }
 
 void multipleSignalsTest(){
+  numToPrint=0;
   signal(2,&setflag);
   for(int i=3;i<9;++i){signal(i,&setNumToPrint);}
   int child;
@@ -100,9 +163,15 @@ void stopContTest(){
 int main(int argc,char** argv){
   //killTest();
   //stopContTest();
-  for(int i=0;i<50;++i){basicTest();}
-  for(int i=0;i<50;++i){multipleSignalsTest();}
+  //communicationTest();
+  //multipleSignalsTest();
+  multipleChildrenTest();
   exit();
+}
+
+void setMask(int signum){
+  flag1=1;
+  sigprocmask(1<<signum);
 }
 
 void setflag(int signum){

@@ -289,6 +289,7 @@ exit(void)
   cas(&curproc->state, RUNNING, -ZOMBIE); //-
 
   //pushcli();
+  cprintf("%d exiting\n",curproc->pid);
   sched();
   panic("zombie exit");
 }
@@ -562,6 +563,7 @@ kill(int pid, int signum)
 
       int pending = p->pendingSigs;
       while(!cas(&p->pendingSigs,pending,pending|sig)){pending=p->pendingSigs;}
+
       //cprintf("kill(%d,%d)\n",pid,signum);
       popcli();
       return 0;
@@ -629,8 +631,7 @@ isStopped(int pid){
 
 int
 handleKill() {
-  struct proc *p;
-  p = myproc();
+  struct proc *p = myproc();
   p->killed=1;
   return 0;
 }
@@ -647,14 +648,12 @@ int handleStop(){
       if((currProc->pendingSigs&contFlag)==0){
         yield();
       }else{
-        cprintf("releasing\n");
         currProc->frozen=0;
         turnOffBit(SIGSTOP,currProc);
         turnOffBit(SIGCONT,currProc);
         flag=0;
       }
     }
-    cprintf("finished handling stop\n");
     return 0;
   }
   return -1;
@@ -688,8 +687,9 @@ setSigMask(uint mask){
 
 void sigret(void) {
   struct proc *p = myproc();
+  cprintf("sigret %d\n",p->handlingSignal);
   copyTF(p->tf,p->usrTFbackup);
-  p->sigMask=p->oldMask;
+  p->handlingSignal = 0;
 }
 
 void printPtable(){

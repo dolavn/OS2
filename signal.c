@@ -42,18 +42,15 @@ void handleSignal(struct trapframe* tf){
   struct proc *p;
   p = myproc(); 
   if(p!=0){
-//     if(p->sigret==12){
-//       cprintf("handler again\n");
-//       printTF(p->tf);
-//     }
     if (((tf->cs) & 3) != DPL_USER) {
       return;
     }
-    //char bits[NUM_OF_SIGS];
-    //getAllSignals(p->pendingSigs,bits);
+    if(p->handlingSignal){
+      return;
+    }
     for(int i=0;i<NUM_OF_SIGS;++i){
       if((1<<i&p->pendingSigs) && !((1<<i)&p->sigMask)){
-        p->oldMask = setSigMask(-1);  
+        //p->oldMask = setSigMask(-1);  
         if(p->sigHandlers[i]==(void*)SIG_DFL){ //kernel space handler
             switch(i){
                 case SIGKILL:
@@ -71,10 +68,9 @@ void handleSignal(struct trapframe* tf){
             setSigMask(p->oldMask);
             turnOffBit(i,p);
         }else{ //user space handler
+            cprintf("user space handler\n");
             copyTF(p->usrTFbackup,p->tf);
             p->tf->eip = (uint)(p->sigHandlers[i]);
-            //cprintf("before user handler:\n");
-            //printTF(p->tf);
             int param = i;
             uint funcSize = sigRetCallEnd-sigRetCall;
             p->tf->esp = p->tf->esp-funcSize;
