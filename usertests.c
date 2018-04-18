@@ -1578,6 +1578,7 @@ validatetest(void)
     }
     sleep(0);
     sleep(0);
+    printf(2,"killing\n");
     kill(pid,SIGKILL);
     wait();
 
@@ -1757,7 +1758,7 @@ main(int argc, char *argv[])
     exit();
   }
   close(open("usertests.ran", O_CREATE));
-  sbrktest();
+
   argptest();
   createdelete();
   linkunlink();
