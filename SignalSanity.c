@@ -22,7 +22,7 @@ void killTest(){
   for(int i=0;i<NUM_OF_CHILDREN;++i){
     kill(children[i],9);
   }
-  wait();
+  for(int i=0;i<NUM_OF_CHILDREN;++i){wait();}
   printf(2,"All children killed!\n");
 }
 
@@ -48,6 +48,9 @@ void multipleChildrenTest(){
       printf(2,"All signals received!\n");
       break;
     }
+  }
+  for(int i=0;i<numOfSigs;++i){
+    wait();
   }
   for(int i=0;i<numOfSigs;++i){
     signal(i,(void*)-1);
@@ -163,9 +166,9 @@ void stopContTest(){
 
 int main(int argc,char** argv){
   multipleChildrenTest();
-  //killTest();
+  killTest();
   //stopContTest();
-  communicationTest();
+  for(int i=0;i<5;++i)communicationTest();
   //multipleSignalsTest();
   exit();
 }

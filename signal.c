@@ -19,15 +19,69 @@ void copyTF(struct trapframe* dst,struct trapframe* src){
   memmove(dst,src,sizeof(struct trapframe));
 }
 
-void getAllSignals(uint pendingSigs,char bits[NUM_OF_SIGS]){
-  int currBit=0;
-  while(pendingSigs>0){
-    bits[currBit++]=pendingSigs%2==0?0:1;
-    pendingSigs=pendingSigs/2;
+int
+handleKill() {
+  struct proc *p = myproc();
+  p->killed=1;
+  return 0;
+}
+
+
+int handleStop(){
+  struct proc* currProc = myproc();
+  if((currProc->state==RUNNING || currProc->state==RUNNABLE) && !currProc->frozen){
+    currProc->frozen=1;
+    int contFlag = 1<<SIGCONT;
+    int flag=1;
+    setSigMask(currProc->oldMask); //retrieve old mask to listen to SIGCONT
+    while(flag==1){
+      if((currProc->pendingSigs&contFlag)==0){
+        yield();
+      }else{
+        currProc->frozen=0;
+        turnOffBit(SIGSTOP,currProc);
+        turnOffBit(SIGCONT,currProc);
+        flag=0;
+      }
+    }
+    return 0;
   }
-  while(currBit<NUM_OF_SIGS){
-    bits[currBit++]=0;
+  return -1;
+}
+
+int handleCont(){
+  struct proc* currProc = myproc();
+  if(currProc->frozen){
+    currProc->frozen=0;
+    return 0;
   }
+  return -1;
+}
+
+
+sighandler_t
+setSignalHandler(int signum,sighandler_t handler){
+  struct proc *curproc = myproc();
+  sighandler_t ans = curproc->sigHandlers[signum];
+  curproc->sigHandlers[signum] = handler;
+  return ans;
+}
+
+
+uint
+setSigMask(uint mask){
+  struct proc *curproc = myproc();
+  uint ans = curproc->sigMask;
+  curproc->sigMask = mask;
+  return ans;
+}
+
+void sigret(void) {
+  struct proc *p = myproc();
+  cprintf("sigret %d\n",p->handlingSignal);
+  copyTF(p->tf,p->usrTFbackup);
+  p->usrTFbackup = 0;
+  p->handlingSignal = 0;
 }
 
 void turnOffBit(int bit,struct proc* p){
@@ -68,9 +122,10 @@ void handleSignal(struct trapframe* tf){
             setSigMask(p->oldMask);
             turnOffBit(i,p);
         }else{ //user space handler
-            //cprintf("user space handler\n");
+            uint esp = p->tf->esp - sizeof(struct trapframe);
+            p->usrTFbackup = (struct trapframe*)esp;
             copyTF(p->usrTFbackup,p->tf);
-            //printTF(p->tf);
+            p->tf->esp = esp;
             p->tf->eip = (uint)(p->sigHandlers[i]);
             int param = i;
             uint funcSize = sigRetCallEnd-sigRetCall;
@@ -88,10 +143,6 @@ void handleSignal(struct trapframe* tf){
         }
       }
     }
-//     if(p->sigret==12){
-//       cprintf("after handling\n");
-//       printTF(p->tf);
-//     }
   }
   return;
 }

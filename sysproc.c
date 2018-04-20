@@ -144,6 +144,10 @@ sys_sleep(void)
   acquire(&tickslock);
   ticks0 = ticks;
   while(ticks - ticks0 < n){
+    if((myproc()->pendingSigs & 1<<SIGKILL) && !(myproc()->sigMask & 1<<SIGKILL)){
+      release(&tickslock);
+      return -1;
+    }
     if(myproc()->killed){
       release(&tickslock);
       return -1;
