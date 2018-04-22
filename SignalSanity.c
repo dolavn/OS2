@@ -274,10 +274,11 @@ void sendSignalUsingKillProgram(){
   signal(6,&setflag);
   signal(8,&setflag2);
   int pid=getpid();
-  char* pidStr = char[20];
-  char* signumStr = char[3];
-  char* argv[] = {pidStr,signumStr,0};
+  char pidStr[20];
+  char signumStr[3];
+  char* argv[] = {"kill",pidStr,signumStr,0};
   itoa(pid,pidStr);
+  int child = fork();
   if(child==0){
     while(1){
       if(flag1){
@@ -337,6 +338,8 @@ int main(int argc,char** argv){
     printf(2,"Unknown argument\n");
     exit();
   }
+  sendSignalUsingKillProgram();
+  exit();
   multipleChildrenTest();
   killTest();
   stopContTest();
@@ -372,6 +375,16 @@ void incCount(int signum){
   count++;
 }
 
-void itoa(int num,char* str){
-  
+void itoa(int x, char *s)
+{
+    int numOfDigits=0;
+    int xCpy=x;
+    while(xCpy){
+      numOfDigits++;
+      xCpy=xCpy/10;
+    }
+    s=s+numOfDigits+1;
+    *--s = 0;
+    if (!x) *--s = '0';
+    for (; x; x/=10) *--s = '0'+x%10;
 }
