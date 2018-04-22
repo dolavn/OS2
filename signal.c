@@ -102,7 +102,6 @@ void handleSignal(struct trapframe* tf){
     }
     for(int i=0;i<NUM_OF_SIGS;++i){
       if((1<<i&p->pendingSigs) && !((1<<i)&p->sigMask)){
-        //p->oldMask = setSigMask(-1);  
         if(p->sigHandlers[i]==(void*)SIG_DFL){ //kernel space handler
             switch(i){
                 case SIGKILL:

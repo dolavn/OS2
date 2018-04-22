@@ -540,7 +540,6 @@ kill(int pid, int signum)
       while(!cas(&p->pendingSigs,pending,pending|sig)){pending=p->pendingSigs;}
       popcli();
       return 0;
-      break;
     }
   }
   return -1;

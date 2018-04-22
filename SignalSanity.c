@@ -2,7 +2,7 @@
 #include "user.h"
 #include "fcntl.h"
 #include "signal.h"
-#define NUM_OF_CHILDREN 10
+#define NUM_OF_CHILDREN 20
 
 int flag1=0;
 int flag2=0;
@@ -14,6 +14,7 @@ void setflag2(int);
 void setflag3(int);
 void incCount(int);
 void setMask(int);
+void itoa(int,char*);
 
 void killTest(){
   printf(2,"starting kill test\n");
@@ -23,7 +24,7 @@ void killTest(){
     if(children[i]==0){while(1);exit();}
   }
   for(int i=0;i<NUM_OF_CHILDREN;++i){
-    kill(children[i],9);
+    kill(children[i],SIGKILL);
   }
   for(int i=0;i<NUM_OF_CHILDREN;++i){wait();}
   printf(2,"All children killed!\n");
@@ -243,23 +244,71 @@ void multipleSignalsTest(){
 
 void stopContTest(){
   int child;
+  signal(4,&setflag);
   if((child=fork())==0){
     while(1){
       printf(2,"Running!!! lalalalal\n");
+      if(flag1){
+        printf(2,"Received signal!\n");
+        flag1=0;
+      }
     }
   }
   sleep(5);
   printf(2,"Stopping child!\n");
   kill(child,17);
   while(!isStopped(child));
-  printf(2,"Child stopped!\n");
-  sleep(5);
+  printf(2,"Child stopped! Sending child a signal, sleep for 10 and then continuing the child.\n");
+  kill(child,4);
+  sleep(10);
   kill(child,19);
   while(isStopped(child));
   kill(child,9);
   wait();
   printf(2,"child killed!\n");
   printf(2,"stop cont test passed\n");
+}
+
+void sendSignalUsingKillProgram(){
+  printf(2,"starting signal test using kill prog\n");
+  signal(6,&setflag);
+  signal(8,&setflag2);
+  int pid=getpid();
+  char* pidStr = char[20];
+  char* signumStr = char[3];
+  char* argv[] = {pidStr,signumStr,0};
+  itoa(pid,pidStr);
+  if(child==0){
+    while(1){
+      if(flag1){
+        flag1=0;
+        itoa(8,signumStr);
+        if(fork()==0){
+          if(exec(argv[0],argv)<0){
+            printf(2,"couldn't exec. test failed\n");
+            exit();
+          }
+        }
+        exit();
+      }
+    }
+  }
+  itoa(child,pidStr);
+  itoa(6,signumStr);
+  if(fork()==0){
+    if(exec(argv[0],argv)<0){
+      printf(2,"couldn't exec. test failed\n");
+      exit();
+    }
+  } 
+  while(1){
+    if(flag2){
+      flag2=0;
+      wait();
+      break;
+    }
+  }
+  printf(2,"signal test using kill prog passed\n");    
 }
 
 int main(int argc,char** argv){
@@ -288,7 +337,7 @@ int main(int argc,char** argv){
     printf(2,"Unknown argument\n");
     exit();
   }
-  //multipleChildrenTest();
+  multipleChildrenTest();
   killTest();
   stopContTest();
   communicationTest();
@@ -321,4 +370,8 @@ void setflag3(int signum){
 
 void incCount(int signum){
   count++;
+}
+
+void itoa(int num,char* str){
+  
 }

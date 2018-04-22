@@ -57,7 +57,7 @@ sys_isStopped(void){
 int
 sys_sigret(void) {
   sigret();
-  return 0;
+  return myproc()->tf->eax; //return value of original system call, if interrupted during system call
 }
 
 int
