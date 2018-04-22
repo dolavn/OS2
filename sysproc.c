@@ -68,8 +68,10 @@ sys_signal(void){
     return -1;
   }
   if(argptr(1,(char**)(&handler),sizeof(void*))<0){
+    cprintf("SIG IS:%p\n",handler);
     return (int)setSignalHandler(signum,(void*)SIG_IGN);  
   }
+  cprintf("SIG IS:%p\n",handler);
   return (int)setSignalHandler(signum,handler);
 }
 

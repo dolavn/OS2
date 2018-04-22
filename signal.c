@@ -78,7 +78,6 @@ setSigMask(uint mask){
 
 void sigret(void) {
   struct proc *p = myproc();
-  cprintf("sigret %d\n",p->handlingSignal);
   copyTF(p->tf,p->usrTFbackup);
   p->usrTFbackup = 0;
   p->handlingSignal = 0;

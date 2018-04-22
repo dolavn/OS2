@@ -1,15 +1,18 @@
 #include "types.h"
 #include "user.h"
 #include "fcntl.h"
+#include "signal.h"
 #define NUM_OF_CHILDREN 10
 
 int flag1=0;
 int flag2=0;
-int numToPrint=0;
+int flag3=0;
+int count=0;
 
 void setflag(int);
 void setflag2(int);
-void setNumToPrint(int);
+void setflag3(int);
+void incCount(int);
 void setMask(int);
 
 void killTest(){
@@ -26,11 +29,72 @@ void killTest(){
   printf(2,"All children killed!\n");
 }
 
+void maskChangeTest(){
+  uint origMask = sigprocmask((1<<2)|(1<<3));
+  if(origMask!=0){
+    printf(2,"Original mask wasn't 0. Test failed\n");
+    return;
+  }
+  uint secMask = sigprocmask((1<<2)|(1<<3)|(1<<4));
+  if(secMask!=12){
+    printf(2,"Mask wasn't changed. Test failed\n");
+    return;
+  }
+  secMask = sigprocmask((1<<2)|(1<<3)|(1<<4));
+  if(secMask!=28){
+    printf(2,"Mask wasn't changed. Test failed\n");
+    return;    
+  }
+  if(fork()==0){
+    secMask = sigprocmask((1<<2)|(1<<3)|(1<<4));
+    if(secMask!=28){
+      printf(2,"Child didn't inherit father's signal mask. Test failed\n");
+    }else{
+      char* argv[] = {"SignalSanity","sigmask"};
+      exec(argv[0],argv);
+    }
+  }
+  wait();
+  sigprocmask(0);
+}
+
+void handlerChange(){
+  printf(2,"Starting handler change test\n");
+  sighandler_t sig = signal(2,&setflag);
+  if(sig!=(void*)SIG_DFL){
+    printf(2,"Original handler wasn't SIG_DFL, test failed\n");
+    return;
+  }
+  sig = signal(2,&setflag);
+  if(sig!=&setflag){
+    printf(2,"Handler wasn't changed to custom handler, test failed\n");
+    return;
+  }
+  sig = signal(2,(void*)SIG_DFL);
+  sig = signal(2,(void*)SIG_DFL);
+  if(sig!=(void*)SIG_DFL){
+    printf(2,"Couldn't restore SIG_DFL, sig=%p\n test failed\n",sig);
+    return;
+  }
+  sig = signal(3,(void*)SIG_IGN);
+  sig = signal(4,&setflag);
+  if(fork()==0){
+    if(signal(3,(void*)SIG_IGN)!=(void*)SIG_IGN || signal(4,&setflag)!=&setflag){
+      printf(2,"Signal handlers changed after fork. test failed\n");
+      return;
+    }
+    char* argv[] = {"SignalSanity","sighandlers"};
+    exec(argv[0],argv);
+  }
+  wait();
+  return;
+}
+
 void multipleChildrenTest(){
-  numToPrint=0;
+  count=0;
   int numOfSigs=32;
   for(int i=0;i<numOfSigs;++i){
-    signal(i,&setNumToPrint);
+    signal(i,&incCount);
   }
   int pid=getpid();
   for(int i=0;i<numOfSigs;++i){
@@ -43,8 +107,8 @@ void multipleChildrenTest(){
     }
   }
   while(1){
-    printf(2,"%d\n",numToPrint);
-    if(numToPrint==numOfSigs){
+    printf(2,"%d\n",count);
+    if(count==numOfSigs){
       printf(2,"All signals received!\n");
       break;
     }
@@ -57,9 +121,10 @@ void multipleChildrenTest(){
   }
 }
 
-void maskChangeTest(){
-  printf(2,"starting mask change test\n");
+void maskChangeSignalTest(){
+  printf(2,"Starting mask change signal test\n");
   signal(2,&setMask);
+  signal(3,&setflag3);
   signal(8,&setflag2);
   int pid=getpid();
   int child=fork();
@@ -75,6 +140,11 @@ void maskChangeTest(){
       if(count==2){
         exit();
       }
+      if(flag3){
+        printf(2,"mask workerd\n");
+        kill(pid,8);
+        exit();
+      }
     }
   }
   printf(2,"sending signal to child\n");
@@ -82,11 +152,24 @@ void maskChangeTest(){
   int count=0;
   while(1){
     if(flag2){
+      flag2=0;
       count++;
       printf(2,"received signal from child\n");
-      printf(2,"trying to send signal again. Then sleeping for 1000\n");
+      printf(2,"trying to send signal again. Then sleeping for 500\n");
       kill(child,2);
-      sleep(1000);
+      sleep(500);
+      if(flag2){
+        printf(2,"Test failed. Shouldn't have received signal back.\n");
+        kill(child,9);
+        break;
+      }
+      printf(2,"did not receive signal from child, sending a different one.\n");
+      kill(child,3);
+      printf(2,"busy waiting for answer\n");
+      while(!flag2);
+      printf(2,"received signal from child.\n");
+      printf(2,"Test passed\n");
+      break;
     }
   }
 }
@@ -121,18 +204,18 @@ void communicationTest(){
 }
 
 void multipleSignalsTest(){
-  numToPrint=0;
+  count=0;
   signal(2,&setflag);
-  for(int i=3;i<9;++i){signal(i,&setNumToPrint);}
+  for(int i=3;i<9;++i){signal(i,&incCount);}
   int child;
   if((child=fork())==0){
     while(1){
       if(flag1){
-        printf(2,"I'm printing number %d\n",numToPrint);
+        printf(2,"I'm printing number %d\n",count);
       }
-      if(numToPrint==6){
+      if(count==6){
         printf(2,"Bye!\n");
-        numToPrint=0;
+        count=0;
         flag1=0;
         exit();
       }
@@ -165,10 +248,38 @@ void stopContTest(){
 }
 
 int main(int argc,char** argv){
-  multipleChildrenTest();
-  killTest();
+  if(argc>1){
+    if(strcmp(argv[1],"sigmask")==0){
+      uint secMask = sigprocmask(0);
+      if(secMask!=28){
+        printf(2,"Mask was changed after exec, test failed.\n");
+        exit();
+      }
+      printf(2,"Mask change test passed\n");
+      exit();
+    }
+    if(strcmp(argv[1],"sighandlers")==0){
+      if(signal(3,(void*)SIG_IGN)!=(void*)SIG_IGN){
+        printf(2,"SIG_IGN wasn't kept after exec. test failed\n");
+        exit();
+      }
+      if(signal(4,&setflag)==&setflag){
+        printf(2,"Custom signal handler wasn't removed after exec. test failed\n");
+        exit();
+      }
+      printf(2,"Handler change test passed\n");
+      exit();
+    }
+    printf(2,"Unknown argument\n");
+    exit();
+  }
+  handlerChange();
+  //multipleChildrenTest();
+  //killTest();
   //stopContTest();
-  for(int i=0;i<5;++i)communicationTest();
+  //communicationTest();
+  //maskChangeTest();
+  //maskChangeSignalTest();
   //multipleSignalsTest();
   exit();
 }
@@ -188,6 +299,11 @@ void setflag2(int signum){
   return;
 }
 
-void setNumToPrint(int signum){
-  numToPrint++;
+void setflag3(int signum){
+  flag3=1;
+  return;
+}
+
+void incCount(int signum){
+  count++;
 }
