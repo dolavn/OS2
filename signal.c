@@ -15,7 +15,6 @@ void printTF(struct trapframe* tf){
 }
 
 void copyTF(struct trapframe* dst,struct trapframe* src){
-  //*dst=*src;
   memmove(dst,src,sizeof(struct trapframe));
 }
 

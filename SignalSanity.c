@@ -30,6 +30,7 @@ void killTest(){
 }
 
 void maskChangeTest(){
+  printf(2,"Starting mask change test\n");
   uint origMask = sigprocmask((1<<2)|(1<<3));
   if(origMask!=0){
     printf(2,"Original mask wasn't 0. Test failed\n");
@@ -50,8 +51,11 @@ void maskChangeTest(){
     if(secMask!=28){
       printf(2,"Child didn't inherit father's signal mask. Test failed\n");
     }else{
-      char* argv[] = {"SignalSanity","sigmask"};
-      exec(argv[0],argv);
+      char* argv[] = {"SignalSanity","sigmask",0};
+      if(exec(argv[0],argv)<0){
+        printf(2,"couldn't exec, test failed\n");
+        exit();
+      }
     }
   }
   wait();
@@ -83,10 +87,16 @@ void handlerChange(){
       printf(2,"Signal handlers changed after fork. test failed\n");
       return;
     }
-    char* argv[] = {"SignalSanity","sighandlers"};
-    exec(argv[0],argv);
+    char* argv[] = {"SignalSanity","sighandlers",0};
+    if(exec(argv[0],argv)<0){
+        printf(2,"couldn't exec, test failed\n");
+        exit();
+    }
   }
   wait();
+  for(int i=0;i<NUM_OF_SIGS;++i){
+    signal(i,(void*)SIG_DFL);
+  }
   return;
 }
 
@@ -98,8 +108,8 @@ void multipleChildrenTest(){
   }
   int pid=getpid();
   for(int i=0;i<numOfSigs;++i){
-    if(fork()==0){
-      sleep(100);
+    int child = fork();
+    if(child==0){
       int signum = i;
       kill(pid,signum);
       printf(2,"%d sent signal (%d,%d)\n",getpid(),pid,signum);
@@ -168,7 +178,8 @@ void maskChangeSignalTest(){
       printf(2,"busy waiting for answer\n");
       while(!flag2);
       printf(2,"received signal from child.\n");
-      printf(2,"Test passed\n");
+      wait();
+      printf(2,"Mask change signal test passed\n");
       break;
     }
   }
@@ -201,6 +212,7 @@ void communicationTest(){
       break;
     }
   }
+  printf(2,"Communication test passed\n");
 }
 
 void multipleSignalsTest(){
@@ -226,6 +238,7 @@ void multipleSignalsTest(){
   printf(2,"Sending multiple signals to child\n");
   for(int i=3;i<9;++i){kill(child,i);}
   wait();
+  printf(2,"Multiple signals test passed\n");
 }
 
 void stopContTest(){
@@ -244,7 +257,9 @@ void stopContTest(){
   kill(child,19);
   while(isStopped(child));
   kill(child,9);
+  wait();
   printf(2,"child killed!\n");
+  printf(2,"stop cont test passed\n");
 }
 
 int main(int argc,char** argv){
@@ -273,14 +288,14 @@ int main(int argc,char** argv){
     printf(2,"Unknown argument\n");
     exit();
   }
-  handlerChange();
   //multipleChildrenTest();
-  //killTest();
-  //stopContTest();
-  //communicationTest();
-  //maskChangeTest();
-  //maskChangeSignalTest();
-  //multipleSignalsTest();
+  killTest();
+  stopContTest();
+  communicationTest();
+  maskChangeTest();
+  handlerChange();
+  maskChangeSignalTest();
+  multipleSignalsTest();
   exit();
 }
 
