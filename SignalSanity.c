@@ -277,10 +277,17 @@ void sendSignalUsingKillProgram(){
   signal(6,&setflag);
   signal(8,&setflag2);
   int pid=getpid();
+
   char* pidStr[20];
   char* signumStr[3];
   char* argv[] = {pidStr,signumStr,0};
+
+  char pidStr[20];
+  char signumStr[3];
+  char* argv[] = {"kill",pidStr,signumStr,0};
+
   itoa(pid,pidStr);
+  int child = fork();
   if(child==0){
     while(1){
       if(flag1){
@@ -343,6 +350,8 @@ int main(int argc,char** argv){
   usrKillTest();
   exit();
 
+  sendSignalUsingKillProgram();
+  exit();
   multipleChildrenTest();
   killTest();
   stopContTest();
@@ -377,6 +386,7 @@ void setflag3(int signum){
 void incCount(int signum){
   count++;
 }
+
 
 // void itoa(int num,char* str){
 //
@@ -446,4 +456,3 @@ void usrKillTest() {
     wait();
   }
   printf(2,"User Kill Test Passed\n");
-}
