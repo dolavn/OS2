@@ -350,8 +350,8 @@ int main(int argc,char** argv){
   usrKillTest();
   exit();
 
-  sendSignalUsingKillProgram();
-  exit();
+  // sendSignalUsingKillProgram();
+  // exit();
   multipleChildrenTest();
   killTest();
   stopContTest();
@@ -456,3 +456,4 @@ void usrKillTest() {
     wait();
   }
   printf(2,"User Kill Test Passed\n");
+}
