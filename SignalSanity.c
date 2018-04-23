@@ -15,6 +15,9 @@ void setflag3(int);
 void incCount(int);
 void setMask(int);
 void itoa(int,char*);
+void usrKillTest(void);
+void reverse(char[]);
+
 
 void killTest(){
   printf(2,"starting kill test\n");
@@ -45,7 +48,7 @@ void maskChangeTest(){
   secMask = sigprocmask((1<<2)|(1<<3)|(1<<4));
   if(secMask!=28){
     printf(2,"Mask wasn't changed. Test failed\n");
-    return;    
+    return;
   }
   if(fork()==0){
     secMask = sigprocmask((1<<2)|(1<<3)|(1<<4));
@@ -268,14 +271,14 @@ void stopContTest(){
   printf(2,"child killed!\n");
   printf(2,"stop cont test passed\n");
 }
-
+/*
 void sendSignalUsingKillProgram(){
   printf(2,"starting signal test using kill prog\n");
   signal(6,&setflag);
   signal(8,&setflag2);
   int pid=getpid();
-  char* pidStr = char[20];
-  char* signumStr = char[3];
+  char* pidStr[20];
+  char* signumStr[3];
   char* argv[] = {pidStr,signumStr,0};
   itoa(pid,pidStr);
   if(child==0){
@@ -300,7 +303,7 @@ void sendSignalUsingKillProgram(){
       printf(2,"couldn't exec. test failed\n");
       exit();
     }
-  } 
+  }
   while(1){
     if(flag2){
       flag2=0;
@@ -308,8 +311,8 @@ void sendSignalUsingKillProgram(){
       break;
     }
   }
-  printf(2,"signal test using kill prog passed\n");    
-}
+  printf(2,"signal test using kill prog passed\n");
+}*/
 
 int main(int argc,char** argv){
   if(argc>1){
@@ -337,6 +340,9 @@ int main(int argc,char** argv){
     printf(2,"Unknown argument\n");
     exit();
   }
+  usrKillTest();
+  exit();
+
   multipleChildrenTest();
   killTest();
   stopContTest();
@@ -372,6 +378,72 @@ void incCount(int signum){
   count++;
 }
 
-void itoa(int num,char* str){
+// void itoa(int num,char* str){
+//
+// }
+
+void itoa(int n, char s[])
+{
+   int i, sign;
+
+   if ((sign = n) < 0)  /* record sign */
+       n = -n;          /* make n positive */
+   i = 0;
+   do {       /* generate digits in reverse order */
+       s[i++] = n % 10 + '0';   /* get next digit */
+   } while ((n /= 10) > 0);     /* delete it */
+   if (sign < 0)
+       s[i++] = '-';
+   s[i] = '\0';
+   reverse(s);
+}
+
+void reverse(char s[])
+{
+   int i, j;
+   char c;
+   char* curr = s;
+   int stringLength = 0;
+   while (*(curr++) != 0) stringLength++;
+
+   for (i = 0, j = stringLength-1; i<j; i++, j--) {
+       c = s[i];
+       s[i] = s[j];
+       s[j] = c;
+   }
+}
+
+void usrKillTest() {
+  int i, j, pid, maxNumOfDigits = 4, numOfSigs = 15;
+  int pids[32];
+  char pidStr[32*maxNumOfDigits];
+  char* argv[66];
+  for (i=0; i<numOfSigs; i++) {  
+    if ((pid = fork()) != 0) {  //father
+      pids[i] = pid; 
+      // printf(2,"%d\n", pids[i]);
+    }
+    else break; //son
+  }
+  if (!pid) {
+    while(1);
+    exit();
+  }
   
+  for (i=0; i<numOfSigs; i++) itoa(pids[i], pidStr+i*maxNumOfDigits);
+  argv[0] = "kill";
+  for (i=0, j=0; i<numOfSigs; i++, j=j+2) {
+    argv[j+1] = pidStr+i*maxNumOfDigits;
+    argv[j+2] = "9";
+  }
+  argv[j+1] = 0;
+  if(exec(argv[0],argv)<0){
+    printf(2,"couldn't exec kill, test failed\n");
+    exit();
+  }
+  for(int i=0;i<numOfSigs;i++){
+    printf(2,"another one bites the dust\n");
+    wait();
+  }
+  printf(2,"User Kill Test Passed\n");
 }
