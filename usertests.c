@@ -1578,7 +1578,6 @@ validatetest(void)
     }
     sleep(0);
     sleep(0);
-    printf(2,"killing\n");
     kill(pid,SIGKILL);
     wait();
 

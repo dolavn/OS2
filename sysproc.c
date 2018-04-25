@@ -8,43 +8,6 @@
 #include "proc.h"
 
 
-//////////////////stam////////////////////////
-static int sharedCounter=0;
-
-int
-sys_cascall(void) {
-  // int counter;
-  // if(argint(0,&counter)<0) return -1;
-  // cprintf("%d\n", counter);
-  int old;
-  do{
-    old = sharedCounter;
-  }while (!cas(&sharedCounter, old, old+1)) ;
-
-  // sharedCounter++;
-  // cprintf("%d\n",cas(&counter, old, 2));
-  // cprintf("%d\n",counter);
-  return sharedCounter;
-}
-// static inline int sys_cas(volatile void *addr, int expected, int newval) {
-//   int ans;
-//   asm volatile("movl %1, %%eax;"//"": "a" (expected) : ", %eax\n\t"
-//                "movl (%2), %%ebx;"//"": "d" (*addr) : "), %ebx\n\t"
-//                "lock cmpxchg %%ebx, %3;"//"($"+addr+")\n\t"
-//                "pushfl;"
-//                "popl %%eax;"
-//                "movl %%eax, %0;"
-//                // get ZF from eax and return
-//                : "=r" (ans)
-//                : "r" (expected) , "r" (addr) , "r" (newval)
-//                : "eax" , "ebx"
-//                );
-//   ans &= ZF_mask;
-//   ans >>= ZF_pos;
-//   return ans;
-// }
-////////////////////////////////////////////
-
 int
 sys_isStopped(void){
   int pid;
@@ -56,8 +19,7 @@ sys_isStopped(void){
 
 int
 sys_sigret(void) {
-  sigret();
-  return myproc()->tf->eax; //return value of original system call, if interrupted during system call
+  return sigret();
 }
 
 int

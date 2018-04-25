@@ -151,26 +151,6 @@ void setNum(int a){
 }
 
 
-/*
-static inline int cas(volatile void *addr, int expected, int newval) {
-  int ans;
-  asm("push %%eax;"
-      "push %%ebx;"
-      "movl %1, %%eax;"//"": "a" (expected) : ", %eax\n\t"
-      "movl (%2), %%ebx;"//"": "d" (*addr) : "), %ebx\n\t"
-      "lock cmpxchg %%ebx, %3;"//"($"+addr+")\n\t"
-      "pushfl;"
-      "popl %%eax;"
-      : "=a" (ans)
-      : "r" (expected) , "r" (addr) , "r" (newval)
-      : "memory");
-  return ans;
-}
-*/
-// static inline int cas(volatile void *addr, int expected, int newval) {
-//   int c = expected+newval;
-//   return c;
-// }
 int
 main(void)
 {
@@ -186,42 +166,7 @@ main(void)
     }
   }
 
-  // int shared_counter=0;
-
-//   int k,t;
-//   int pid;
-//   for (k = 0; k < 10; k++) {
-//     pid=fork1();
-//     if (pid == 0) {
-//       fork1();
-//       for (t=0; t<150; t++) printf(2, "after %d\n",cascall(0));
-//       break;
-//     }
-//   }
-
-  // if (pid == 0) {
-  //   printf(2, "before %d\n",shared_counter);
-  //   cascall(shared_counter);
-  //   printf(2, "after %d\n",shared_counter);
-  // }
-
-  // signal(5,&changeNum);
-  // signal(6,&changeNum);
-  /*
-  int pid=fork1();
-
-  if(pid == 0){
-    while(1){
-      if(0){printf(2,"printing\n");}
-    }
-  }
-  int type=17;*/
-  // Read and run input commands.
-
   while(getcmd(buf, sizeof(buf)) >= 0){
-    /*kill(pid,type);
-    printf(2,"kill(%d,%d)\n",pid,type);
-    type=type==17?19:17;*/
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n

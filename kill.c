@@ -11,7 +11,6 @@ main(int argc, char **argv)
     exit();
   }
   for(i=1; i<argc-1; i=i+2){
-    printf(2,"sending %s signal:%s\n",argv[i],argv[i+1]);
     kill(atoi(argv[i]),atoi(argv[i+1]));
   }
   exit();

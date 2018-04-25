@@ -34,7 +34,7 @@ struct context {
   uint eip;
 };
 
-enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+enum procstate { UNUSED,PRE_UNUSED, EMBRYO, SLEEPING,PRE_SLEEPING, RUNNABLE, PRE_RUNNABLE, RUNNING, ZOMBIE,PRE_ZOMBIE };
 
 // Per-process state
 struct proc {
@@ -54,7 +54,6 @@ struct proc {
   uint pendingSigs;
   uint sigMask;
   char frozen;                 // Frozen flag
-  uint oldMask;
   void* sigHandlers[NUM_OF_SIGS];
   struct trapframe* usrTFbackup;
   int handlingSignal;
@@ -66,6 +65,7 @@ sighandler_t setSignalHandler(int,sighandler_t);
 int handleKill();
 int handleStop();
 
+void finishProcTransition(struct proc*);
 void handleSignal(struct trapframe*);
 void turnOffBit(int,struct proc*);
 void copyTF(struct trapframe*,struct trapframe*);

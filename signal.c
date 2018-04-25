@@ -32,7 +32,6 @@ int handleStop(){
     currProc->frozen=1;
     int contFlag = 1<<SIGCONT;
     int flag=1;
-    setSigMask(currProc->oldMask); //retrieve old mask to listen to SIGCONT
     while(flag==1){
       if((currProc->pendingSigs&contFlag)==0){
         yield();
@@ -75,11 +74,12 @@ setSigMask(uint mask){
   return ans;
 }
 
-void sigret(void) {
+int sigret(void) {
   struct proc *p = myproc();
   copyTF(p->tf,p->usrTFbackup);
   p->usrTFbackup = 0;
   p->handlingSignal = 0;
+  return p->tf->eax;
 }
 
 void turnOffBit(int bit,struct proc* p){
@@ -88,6 +88,26 @@ void turnOffBit(int bit,struct proc* p){
   operand = ~operand;
   int pending = p->pendingSigs;
   while(!cas(&p->pendingSigs,pending,pending&operand)){pending=p->pendingSigs;}
+}
+
+void handleUserSignal(struct proc* p,int signum){
+    uint esp = p->tf->esp - sizeof(struct trapframe);
+    p->usrTFbackup = (struct trapframe*)esp;
+    copyTF(p->usrTFbackup,p->tf);
+    p->tf->esp = esp;
+    p->tf->eip = (uint)(p->sigHandlers[signum]);
+    uint funcSize = sigRetCallEnd-sigRetCall;
+    p->tf->esp = p->tf->esp-funcSize;
+    memmove((void*)(p->tf->esp),sigRetCall,funcSize);
+    void* sigFunc = (void*)p->tf->esp; //address to function on stack
+    while(p->tf->esp--%4!=0);
+    p->tf->esp = p->tf->esp-4;
+    memmove((void*)(p->tf->esp),&signum,4);
+    p->tf->esp = p->tf->esp-4;
+    memmove((void*)(p->tf->esp),&sigFunc,4);
+    turnOffBit(signum,p);
+    p->handlingSignal=1;
+    return;
 }
 
 void handleSignal(struct trapframe* tf){
@@ -102,6 +122,7 @@ void handleSignal(struct trapframe* tf){
     }
     for(int i=0;i<NUM_OF_SIGS;++i){
       if((1<<i&p->pendingSigs) && !((1<<i)&p->sigMask)){
+        if(p->sigHandlers[i]==(void*)SIG_IGN){continue;}
         if(p->sigHandlers[i]==(void*)SIG_DFL){ //kernel space handler
             switch(i){
                 case SIGKILL:
@@ -116,26 +137,9 @@ void handleSignal(struct trapframe* tf){
                     handleKill();
                     break;
             }
-            setSigMask(p->oldMask);
             turnOffBit(i,p);
         }else{ //user space handler
-            uint esp = p->tf->esp - sizeof(struct trapframe);
-            p->usrTFbackup = (struct trapframe*)esp;
-            copyTF(p->usrTFbackup,p->tf);
-            p->tf->esp = esp;
-            p->tf->eip = (uint)(p->sigHandlers[i]);
-            int param = i;
-            uint funcSize = sigRetCallEnd-sigRetCall;
-            p->tf->esp = p->tf->esp-funcSize;
-            memmove((void*)(p->tf->esp),sigRetCall,funcSize);
-            void* sigFunc = (void*)p->tf->esp; //address to function on stack
-            while(p->tf->esp--%4!=0);
-            p->tf->esp = p->tf->esp-4;
-            memmove((void*)(p->tf->esp),&param,4);
-            p->tf->esp = p->tf->esp-4;
-            memmove((void*)(p->tf->esp),&sigFunc,4);
-            turnOffBit(i,p);
-            p->handlingSignal=1;
+            handleUserSignal(p,i);
             return;
         }
       }

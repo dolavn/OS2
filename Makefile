@@ -175,7 +175,7 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
-	_SignalSanity\
+	_signalTest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

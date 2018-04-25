@@ -125,8 +125,7 @@ void            wakeup(void*);
 void            yield(void);
 uint            sigprocmask(uint sigmask);
 sighandler_t    signal(int,sighandler_t);
-void            sigret(void);
-int             cascall(void);
+int             sigret(void);
 int             isStopped(int);
 
 // swtch.S
